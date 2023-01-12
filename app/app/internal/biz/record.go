@@ -177,6 +177,7 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 			myUserRecommendUserLocationLast *Location
 			stopLocations                   []*Location
 			myLastStopLocation              *Location
+			dhbAmount                       int64
 			err                             error
 		)
 
@@ -244,14 +245,17 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 			locationCurrentLevel = 1
 			locationCurrentMax = 2500000000000
 			currentValue = 500000000000
+			dhbAmount = 50000000000000
 		} else if "1000000000000000000" == v.Amount {
 			locationCurrentLevel = 2
 			locationCurrentMax = 5000000000000
 			currentValue = 1000000000000
+			dhbAmount = 100000000000000
 		} else if "3000000000000000000" == v.Amount {
 			locationCurrentLevel = 3
 			locationCurrentMax = 15000000000000
 			currentValue = 3000000000000
+			dhbAmount = 300000000000000
 		} else {
 			continue
 		}
@@ -535,7 +539,7 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 										if tmpCurrentTopAmount < tmpMyTopUserRecommendUserLocationLastBalanceAmount { // 大于最大可分红额度
 											rewardTopAmount = tmpCurrentTopAmount
 										}
-										_, err = ruc.userBalanceRepo.NormalRecommendReward(ctx, tmpMyTopUserRecommendUserId, rewardTopAmount, currentLocation.ID) // 直推人奖励
+										_, err = ruc.userBalanceRepo.NormalRecommendTopReward(ctx, tmpMyTopUserRecommendUserId, rewardTopAmount, currentLocation.ID, int64(i+1)) // 直推人奖励
 										if nil != err {
 											return err
 										}
@@ -648,7 +652,7 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 
 			}
 
-			_, err = ruc.userBalanceRepo.Deposit(ctx, v.UserId, currentValue) // 充值
+			_, err = ruc.userBalanceRepo.Deposit(ctx, v.UserId, currentValue, dhbAmount) // 充值
 			if nil != err {
 				return err
 			}

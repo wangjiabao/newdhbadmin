@@ -141,8 +141,10 @@ type UserBalanceRepo interface {
 	UserDailyFee(ctx context.Context, userId int64, amount int64) (int64, error)
 	RecommendWithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error)
 	NormalRecommendReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error)
+	NormalRecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, reasonId int64) (int64, error)
 	NormalWithdrawRecommendReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error)
-	Deposit(ctx context.Context, userId int64, amount int64) (int64, error)
+	NormalWithdrawRecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, reasonId int64) (int64, error)
+	Deposit(ctx context.Context, userId int64, amount int64, dhbAmount int64) (int64, error)
 	DepositLast(ctx context.Context, userId int64, lastAmount int64, locationId int64) (int64, error)
 	DepositDhb(ctx context.Context, userId int64, amount int64) (int64, error)
 	GetUserBalance(ctx context.Context, userId int64) (*UserBalance, error)
@@ -2078,7 +2080,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 										if tmpCurrentTopAmount < tmpMyTopUserRecommendUserLocationLastBalanceAmount { // 大于最大可分红额度
 											rewardTopAmount = tmpCurrentTopAmount
 										}
-										_, err = uuc.ubRepo.NormalWithdrawRecommendReward(ctx, tmpMyTopUserRecommendUserId, rewardTopAmount, myLocationLast.ID) // 直推人奖励
+										_, err = uuc.ubRepo.NormalWithdrawRecommendTopReward(ctx, tmpMyTopUserRecommendUserId, rewardTopAmount, myLocationLast.ID, int64(i+1)) // 直推人奖励
 										if nil != err {
 											return err
 										}
