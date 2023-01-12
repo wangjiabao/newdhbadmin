@@ -1720,21 +1720,22 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 		withdrawAmount                  int64
 		stopLocations                   []*Location
 		//lock                            bool
-		withdrawNotDeal    []*Withdraw
-		configs            []*Config
-		recommendNeed      int64
-		recommendNeedVip1  int64
-		recommendNeedVip2  int64
-		recommendNeedVip3  int64
-		recommendNeedVip4  int64
-		recommendNeedVip5  int64
-		recommendNeedOne   int64
-		recommendNeedTwo   int64
-		recommendNeedThree int64
-		recommendNeedFour  int64
-		recommendNeedFive  int64
-		recommendNeedSix   int64
-		err                error
+		withdrawNotDeal     []*Withdraw
+		configs             []*Config
+		recommendNeed       int64
+		recommendNeedVip1   int64
+		recommendNeedVip2   int64
+		recommendNeedVip3   int64
+		recommendNeedVip4   int64
+		recommendNeedVip5   int64
+		recommendNeedOne    int64
+		recommendNeedTwo    int64
+		recommendNeedThree  int64
+		recommendNeedFour   int64
+		recommendNeedFive   int64
+		recommendNeedSix    int64
+		tmpRecommendUserIds []string
+		err                 error
 	)
 	// 配置
 	configs, _ = uuc.configRepo.GetConfigByKeys(ctx, "recommend_need", "recommend_need_one",
@@ -1845,7 +1846,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 			return nil, err
 		}
 		if "" != userRecommend.RecommendCode {
-			tmpRecommendUserIds := strings.Split(userRecommend.RecommendCode, "D")
+			tmpRecommendUserIds = strings.Split(userRecommend.RecommendCode, "D")
 			if 2 <= len(tmpRecommendUserIds) {
 				myUserRecommendUserId, _ = strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-1], 10, 64) // 最后一位是直推人
 			}
@@ -1934,7 +1935,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 					tmpStatus := myUserRecommendUserLocationLast.Status // 现在还在运行中
 					tmpCurrent := myUserRecommendUserLocationLast.Current
 
-					tmpBalanceAmount := currentValue / 10000 * recommendNeed * recommendNeedOne // 记录下一次
+					tmpBalanceAmount := currentValue / 100 * recommendNeed // 记录下一次
 					myUserRecommendUserLocationLast.Status = "running"
 					myUserRecommendUserLocationLast.Current += tmpBalanceAmount
 					if myUserRecommendUserLocationLast.Current >= myUserRecommendUserLocationLast.CurrentMax { // 占位分红人分满停止
@@ -2023,172 +2024,168 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 				}
 
 				// 推荐人的推荐信息，往上找
-				tmpMyUserRecommendInfo, _ := uuc.urRepo.GetUserRecommendByUserId(ctx, myUserRecommendUserId)
-				if nil != tmpMyUserRecommendInfo {
-					if "" != tmpMyUserRecommendInfo.RecommendCode {
-						tmpTopRecommendUserIds := strings.Split(tmpMyUserRecommendInfo.RecommendCode, "D")
-						if 2 <= len(tmpTopRecommendUserIds) {
 
-							fmt.Println(tmpTopRecommendUserIds)
+				if 2 <= len(tmpRecommendUserIds) {
+					fmt.Println(tmpRecommendUserIds)
+					for i := 1; i <= 6; i++ {
+						// 有占位信息，推荐人推荐人的上一代
+						if len(tmpRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
+							break
+						}
+						tmpMyTopUserRecommendUserId, _ := strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-i], 10, 64) // 最后一位是直推人
 
-							for i := 1; i <= 5; i++ {
-								// 有占位信息，推荐人推荐人的上一代
-								if len(tmpTopRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
-									break
+						var tmpMyTopUserRecommendUserLocationLastBalanceAmount int64
+						if i == 1 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedOne // 记录下一次
+						} else if i == 2 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedTwo // 记录下一次
+						} else if i == 3 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedThree // 记录下一次
+						} else if i == 4 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedFour // 记录下一次
+						} else if i == 5 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedFive // 记录下一次
+						} else if i == 6 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedSix // 记录下一次
+						} else {
+							break
+						}
+
+						tmpMyTopUserRecommendUserLocationLast, _ := uuc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
+						if nil != tmpMyTopUserRecommendUserLocationLast {
+							tmpMyTopUserRecommendUserLocationLastStatus := tmpMyTopUserRecommendUserLocationLast.Status // 现在还在运行中
+							tmpMyTopUserRecommendUserLocationLastCurrent := tmpMyTopUserRecommendUserLocationLast.Current
+
+							tmpMyTopUserRecommendUserLocationLast.Status = "running"
+							tmpMyTopUserRecommendUserLocationLast.Current += tmpMyTopUserRecommendUserLocationLastBalanceAmount
+							if tmpMyTopUserRecommendUserLocationLast.Current >= tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 占位分红人分满停止
+								tmpMyTopUserRecommendUserLocationLast.Status = "stop"
+								if "running" == tmpMyTopUserRecommendUserLocationLastStatus {
+									tmpMyTopUserRecommendUserLocationLast.StopDate = time.Now().UTC().Add(8 * time.Hour)
 								}
-								tmpMyTopUserRecommendUserId, _ := strconv.ParseInt(tmpTopRecommendUserIds[len(tmpTopRecommendUserIds)-i], 10, 64) // 最后一位是直推人
-
-								var tmpMyTopUserRecommendUserLocationLastBalanceAmount int64
-								if i == 1 {
-									tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedTwo // 记录下一次
-								} else if i == 2 {
-									tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedThree // 记录下一次
-								} else if i == 3 {
-									tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedFour // 记录下一次
-								} else if i == 4 {
-									tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedFive // 记录下一次
-								} else if i == 5 {
-									tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedSix // 记录下一次
-								} else {
-									break
-								}
-
-								tmpMyTopUserRecommendUserLocationLast, _ := uuc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
-								if nil != tmpMyTopUserRecommendUserLocationLast {
-									tmpMyTopUserRecommendUserLocationLastStatus := tmpMyTopUserRecommendUserLocationLast.Status // 现在还在运行中
-									tmpMyTopUserRecommendUserLocationLastCurrent := tmpMyTopUserRecommendUserLocationLast.Current
-
-									tmpMyTopUserRecommendUserLocationLast.Status = "running"
-									tmpMyTopUserRecommendUserLocationLast.Current += tmpMyTopUserRecommendUserLocationLastBalanceAmount
-									if tmpMyTopUserRecommendUserLocationLast.Current >= tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 占位分红人分满停止
-										tmpMyTopUserRecommendUserLocationLast.Status = "stop"
-										if "running" == tmpMyTopUserRecommendUserLocationLastStatus {
-											tmpMyTopUserRecommendUserLocationLast.StopDate = time.Now().UTC().Add(8 * time.Hour)
-										}
-									}
-									if 0 < tmpMyTopUserRecommendUserLocationLastBalanceAmount {
-										err = uuc.locationRepo.UpdateLocation(ctx, tmpMyTopUserRecommendUserLocationLast.ID, tmpMyTopUserRecommendUserLocationLast.Status, tmpMyTopUserRecommendUserLocationLastBalanceAmount, tmpMyTopUserRecommendUserLocationLast.StopDate) // 分红占位数据修改
-										if nil != err {
-											return err
-										}
-									}
-									systemAmount -= tmpMyTopUserRecommendUserLocationLastBalanceAmount // 扣除
-
-									if 0 < tmpMyTopUserRecommendUserLocationLastBalanceAmount && "running" == tmpMyTopUserRecommendUserLocationLastStatus && tmpMyTopUserRecommendUserLocationLastCurrent < tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 这次还能分红
-										tmpCurrentTopAmount := tmpMyTopUserRecommendUserLocationLast.CurrentMax - tmpMyTopUserRecommendUserLocationLastCurrent // 最大可分红额度
-										rewardTopAmount := tmpMyTopUserRecommendUserLocationLastBalanceAmount
-										if tmpCurrentTopAmount < tmpMyTopUserRecommendUserLocationLastBalanceAmount { // 大于最大可分红额度
-											rewardTopAmount = tmpCurrentTopAmount
-										}
-										_, err = uuc.ubRepo.NormalWithdrawRecommendTopReward(ctx, tmpMyTopUserRecommendUserId, rewardTopAmount, myLocationLast.ID, int64(i+1)) // 直推人奖励
-										if nil != err {
-											return err
-										}
-									}
-								}
-
 							}
-
-							fmt.Println(recommendNeedLast)
-
-							for i := 1; i <= len(tmpTopRecommendUserIds)-1; i++ {
-								// 有占位信息，推荐人推荐人的上一代
-								if len(tmpTopRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
-									break
+							if 0 < tmpMyTopUserRecommendUserLocationLastBalanceAmount {
+								err = uuc.locationRepo.UpdateLocation(ctx, tmpMyTopUserRecommendUserLocationLast.ID, tmpMyTopUserRecommendUserLocationLast.Status, tmpMyTopUserRecommendUserLocationLastBalanceAmount, tmpMyTopUserRecommendUserLocationLast.StopDate) // 分红占位数据修改
+								if nil != err {
+									return err
 								}
-								tmpMyTopUserRecommendUserId, _ := strconv.ParseInt(tmpTopRecommendUserIds[len(tmpTopRecommendUserIds)-i], 10, 64) // 最后一位是直推人
-								if 0 >= tmpMyTopUserRecommendUserId || 0 >= recommendNeedLast {
-									break
+							}
+							systemAmount -= tmpMyTopUserRecommendUserLocationLastBalanceAmount // 扣除
+
+							if 0 < tmpMyTopUserRecommendUserLocationLastBalanceAmount && "running" == tmpMyTopUserRecommendUserLocationLastStatus && tmpMyTopUserRecommendUserLocationLastCurrent < tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 这次还能分红
+								tmpCurrentTopAmount := tmpMyTopUserRecommendUserLocationLast.CurrentMax - tmpMyTopUserRecommendUserLocationLastCurrent // 最大可分红额度
+								rewardTopAmount := tmpMyTopUserRecommendUserLocationLastBalanceAmount
+								if tmpCurrentTopAmount < tmpMyTopUserRecommendUserLocationLastBalanceAmount { // 大于最大可分红额度
+									rewardTopAmount = tmpCurrentTopAmount
 								}
-								fmt.Println(tmpMyTopUserRecommendUserId)
-
-								myUserTopRecommendUserInfo, _ := uuc.uiRepo.GetUserInfoByUserId(ctx, tmpMyTopUserRecommendUserId)
-								if nil == myUserTopRecommendUserInfo {
-									continue
-								}
-
-								tmpMyTopUserRecommendUserLocationLast, _ := uuc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
-								if nil == tmpMyTopUserRecommendUserLocationLast {
-									continue
-								}
-
-								var tmpMyRecommendAmount int64
-								if 5 == myUserTopRecommendUserInfo.Vip { // 会员等级分红
-									if recommendNeedVip5 > recommendNeedLast {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-									} else {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip5
-									}
-									recommendNeedLast -= recommendNeedVip5
-								} else if 4 == myUserTopRecommendUserInfo.Vip {
-									if recommendNeedVip4 > recommendNeedLast {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-									} else {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip4
-									}
-									recommendNeedLast -= recommendNeedVip4
-								} else if 3 == myUserTopRecommendUserInfo.Vip {
-									if recommendNeedVip3 > recommendNeedLast {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-									} else {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip3
-									}
-									recommendNeedLast -= recommendNeedVip3
-								} else if 2 == myUserTopRecommendUserInfo.Vip {
-									if recommendNeedVip2 > recommendNeedLast {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-									} else {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip2
-									}
-									recommendNeedLast -= recommendNeedVip2
-								} else if 1 == myUserTopRecommendUserInfo.Vip {
-									if recommendNeedVip1 > recommendNeedLast {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-									} else {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip1
-									}
-									recommendNeedLast -= recommendNeedVip1
-								} else {
-									continue
-								}
-								fmt.Println(tmpMyRecommendAmount)
-								if 0 < tmpMyRecommendAmount { // 扣除推荐人分红
-									tmpStatus := tmpMyTopUserRecommendUserLocationLast.Status // 现在还在运行中
-									tmpCurrent := tmpMyTopUserRecommendUserLocationLast.Current
-
-									tmpBalanceAmount := tmpMyRecommendAmount // 记录下一次
-									tmpMyTopUserRecommendUserLocationLast.Status = "running"
-									tmpMyTopUserRecommendUserLocationLast.Current += tmpBalanceAmount
-									if tmpMyTopUserRecommendUserLocationLast.Current >= tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 占位分红人分满停止
-										tmpMyTopUserRecommendUserLocationLast.Status = "stop"
-										if "running" == tmpStatus {
-											tmpMyTopUserRecommendUserLocationLast.StopDate = time.Now().UTC().Add(8 * time.Hour)
-										}
-									}
-									if 0 < tmpBalanceAmount {
-										err = uuc.locationRepo.UpdateLocation(ctx, tmpMyTopUserRecommendUserLocationLast.ID, tmpMyTopUserRecommendUserLocationLast.Status, tmpBalanceAmount, tmpMyTopUserRecommendUserLocationLast.StopDate) // 分红占位数据修改
-										if nil != err {
-											return err
-										}
-									}
-									systemAmount -= tmpBalanceAmount                                                                                     // 扣除
-									if 0 < tmpBalanceAmount && "running" == tmpStatus && tmpCurrent < tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 这次还能分红
-										tmpCurrentAmount := tmpMyTopUserRecommendUserLocationLast.CurrentMax - tmpCurrent // 最大可分红额度
-										rewardAmount := tmpBalanceAmount
-										if tmpCurrentAmount < tmpBalanceAmount { // 大于最大可分红额度
-											rewardAmount = tmpCurrentAmount
-										}
-										_, err = uuc.ubRepo.RecommendWithdrawReward(ctx, tmpMyTopUserRecommendUserId, rewardAmount, myLocationLast.ID) // 推荐人奖励
-										if nil != err {
-											return err
-										}
-
-									}
-
+								_, err = uuc.ubRepo.NormalWithdrawRecommendTopReward(ctx, tmpMyTopUserRecommendUserId, rewardTopAmount, myLocationLast.ID, int64(i)) // 直推人奖励
+								if nil != err {
+									return err
 								}
 							}
 						}
+
 					}
+
+					fmt.Println(recommendNeedLast)
+
+					for i := 2; i <= len(tmpRecommendUserIds)-1; i++ {
+						// 有占位信息，推荐人推荐人的上一代
+						if len(tmpRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
+							break
+						}
+						tmpMyTopUserRecommendUserId, _ := strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-i], 10, 64) // 最后一位是直推人
+						if 0 >= tmpMyTopUserRecommendUserId || 0 >= recommendNeedLast {
+							break
+						}
+						fmt.Println(tmpMyTopUserRecommendUserId)
+
+						myUserTopRecommendUserInfo, _ := uuc.uiRepo.GetUserInfoByUserId(ctx, tmpMyTopUserRecommendUserId)
+						if nil == myUserTopRecommendUserInfo {
+							continue
+						}
+
+						tmpMyTopUserRecommendUserLocationLast, _ := uuc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
+						if nil == tmpMyTopUserRecommendUserLocationLast {
+							continue
+						}
+
+						var tmpMyRecommendAmount int64
+						if 5 == myUserTopRecommendUserInfo.Vip { // 会员等级分红
+							if recommendNeedVip5 > recommendNeedLast {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
+							} else {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip5
+							}
+							recommendNeedLast -= recommendNeedVip5
+						} else if 4 == myUserTopRecommendUserInfo.Vip {
+							if recommendNeedVip4 > recommendNeedLast {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
+							} else {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip4
+							}
+							recommendNeedLast -= recommendNeedVip4
+						} else if 3 == myUserTopRecommendUserInfo.Vip {
+							if recommendNeedVip3 > recommendNeedLast {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
+							} else {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip3
+							}
+							recommendNeedLast -= recommendNeedVip3
+						} else if 2 == myUserTopRecommendUserInfo.Vip {
+							if recommendNeedVip2 > recommendNeedLast {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
+							} else {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip2
+							}
+							recommendNeedLast -= recommendNeedVip2
+						} else if 1 == myUserTopRecommendUserInfo.Vip {
+							if recommendNeedVip1 > recommendNeedLast {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
+							} else {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip1
+							}
+							recommendNeedLast -= recommendNeedVip1
+						} else {
+							continue
+						}
+						fmt.Println(tmpMyRecommendAmount)
+						if 0 < tmpMyRecommendAmount { // 扣除推荐人分红
+							tmpStatus := tmpMyTopUserRecommendUserLocationLast.Status // 现在还在运行中
+							tmpCurrent := tmpMyTopUserRecommendUserLocationLast.Current
+
+							tmpBalanceAmount := tmpMyRecommendAmount // 记录下一次
+							tmpMyTopUserRecommendUserLocationLast.Status = "running"
+							tmpMyTopUserRecommendUserLocationLast.Current += tmpBalanceAmount
+							if tmpMyTopUserRecommendUserLocationLast.Current >= tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 占位分红人分满停止
+								tmpMyTopUserRecommendUserLocationLast.Status = "stop"
+								if "running" == tmpStatus {
+									tmpMyTopUserRecommendUserLocationLast.StopDate = time.Now().UTC().Add(8 * time.Hour)
+								}
+							}
+							if 0 < tmpBalanceAmount {
+								err = uuc.locationRepo.UpdateLocation(ctx, tmpMyTopUserRecommendUserLocationLast.ID, tmpMyTopUserRecommendUserLocationLast.Status, tmpBalanceAmount, tmpMyTopUserRecommendUserLocationLast.StopDate) // 分红占位数据修改
+								if nil != err {
+									return err
+								}
+							}
+							systemAmount -= tmpBalanceAmount                                                                                     // 扣除
+							if 0 < tmpBalanceAmount && "running" == tmpStatus && tmpCurrent < tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 这次还能分红
+								tmpCurrentAmount := tmpMyTopUserRecommendUserLocationLast.CurrentMax - tmpCurrent // 最大可分红额度
+								rewardAmount := tmpBalanceAmount
+								if tmpCurrentAmount < tmpBalanceAmount { // 大于最大可分红额度
+									rewardAmount = tmpCurrentAmount
+								}
+								_, err = uuc.ubRepo.RecommendWithdrawReward(ctx, tmpMyTopUserRecommendUserId, rewardAmount, myLocationLast.ID) // 推荐人奖励
+								if nil != err {
+									return err
+								}
+
+							}
+
+						}
+					}
+
 				}
 			}
 

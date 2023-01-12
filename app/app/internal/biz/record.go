@@ -177,6 +177,7 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 			myUserRecommendUserLocationLast *Location
 			stopLocations                   []*Location
 			myLastStopLocation              *Location
+			tmpRecommendUserIds             []string
 			dhbAmount                       int64
 			err                             error
 		)
@@ -270,7 +271,7 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 			continue
 		}
 		if "" != userRecommend.RecommendCode {
-			tmpRecommendUserIds := strings.Split(userRecommend.RecommendCode, "D")
+			tmpRecommendUserIds = strings.Split(userRecommend.RecommendCode, "D")
 			if 2 <= len(tmpRecommendUserIds) {
 				myUserRecommendUserId, _ = strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-1], 10, 64) // 最后一位是直推人
 			}
@@ -395,7 +396,7 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 					tmpStatus := myUserRecommendUserLocationLast.Status // 现在还在运行中
 					tmpCurrent := myUserRecommendUserLocationLast.Current
 
-					tmpBalanceAmount := currentValue / 10000 * recommendNeed * recommendNeedOne // 记录下一次
+					tmpBalanceAmount := currentValue / 100 * recommendNeed // 记录下一次
 					myUserRecommendUserLocationLast.Status = "running"
 					myUserRecommendUserLocationLast.Current += tmpBalanceAmount
 					if myUserRecommendUserLocationLast.Current >= myUserRecommendUserLocationLast.CurrentMax { // 占位分红人分满停止
@@ -482,172 +483,168 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 				}
 
 				// 推荐人的推荐信息，往上找
-				tmpMyUserRecommendInfo, _ := ruc.userRecommendRepo.GetUserRecommendByUserId(ctx, myUserRecommendUserId)
-				if nil != tmpMyUserRecommendInfo {
-					if "" != tmpMyUserRecommendInfo.RecommendCode {
-						tmpTopRecommendUserIds := strings.Split(tmpMyUserRecommendInfo.RecommendCode, "D")
-						if 2 <= len(tmpTopRecommendUserIds) {
 
-							fmt.Println(tmpTopRecommendUserIds)
+				if 2 <= len(tmpRecommendUserIds) {
+					fmt.Println(tmpRecommendUserIds)
+					for i := 1; i <= 6; i++ {
+						// 有占位信息，推荐人推荐人的上一代
+						if len(tmpRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
+							break
+						}
+						tmpMyTopUserRecommendUserId, _ := strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-i], 10, 64) // 最后一位是直推人
 
-							for i := 1; i <= 5; i++ {
-								// 有占位信息，推荐人推荐人的上一代
-								if len(tmpTopRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
-									break
+						var tmpMyTopUserRecommendUserLocationLastBalanceAmount int64
+						if i == 1 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedOne // 记录下一次
+						} else if i == 2 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedTwo // 记录下一次
+						} else if i == 3 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedThree // 记录下一次
+						} else if i == 4 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedFour // 记录下一次
+						} else if i == 5 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedFive // 记录下一次
+						} else if i == 6 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedSix // 记录下一次
+						} else {
+							break
+						}
+
+						tmpMyTopUserRecommendUserLocationLast, _ := ruc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
+						if nil != tmpMyTopUserRecommendUserLocationLast {
+							tmpMyTopUserRecommendUserLocationLastStatus := tmpMyTopUserRecommendUserLocationLast.Status // 现在还在运行中
+							tmpMyTopUserRecommendUserLocationLastCurrent := tmpMyTopUserRecommendUserLocationLast.Current
+
+							tmpMyTopUserRecommendUserLocationLast.Status = "running"
+							tmpMyTopUserRecommendUserLocationLast.Current += tmpMyTopUserRecommendUserLocationLastBalanceAmount
+							if tmpMyTopUserRecommendUserLocationLast.Current >= tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 占位分红人分满停止
+								tmpMyTopUserRecommendUserLocationLast.Status = "stop"
+								if "running" == tmpMyTopUserRecommendUserLocationLastStatus {
+									tmpMyTopUserRecommendUserLocationLast.StopDate = time.Now().UTC().Add(8 * time.Hour)
 								}
-								tmpMyTopUserRecommendUserId, _ := strconv.ParseInt(tmpTopRecommendUserIds[len(tmpTopRecommendUserIds)-i], 10, 64) // 最后一位是直推人
-
-								var tmpMyTopUserRecommendUserLocationLastBalanceAmount int64
-								if i == 1 {
-									tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedTwo // 记录下一次
-								} else if i == 2 {
-									tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedThree // 记录下一次
-								} else if i == 3 {
-									tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedFour // 记录下一次
-								} else if i == 4 {
-									tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedFive // 记录下一次
-								} else if i == 5 {
-									tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedSix // 记录下一次
-								} else {
-									break
-								}
-
-								tmpMyTopUserRecommendUserLocationLast, _ := ruc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
-								if nil != tmpMyTopUserRecommendUserLocationLast {
-									tmpMyTopUserRecommendUserLocationLastStatus := tmpMyTopUserRecommendUserLocationLast.Status // 现在还在运行中
-									tmpMyTopUserRecommendUserLocationLastCurrent := tmpMyTopUserRecommendUserLocationLast.Current
-
-									tmpMyTopUserRecommendUserLocationLast.Status = "running"
-									tmpMyTopUserRecommendUserLocationLast.Current += tmpMyTopUserRecommendUserLocationLastBalanceAmount
-									if tmpMyTopUserRecommendUserLocationLast.Current >= tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 占位分红人分满停止
-										tmpMyTopUserRecommendUserLocationLast.Status = "stop"
-										if "running" == tmpMyTopUserRecommendUserLocationLastStatus {
-											tmpMyTopUserRecommendUserLocationLast.StopDate = time.Now().UTC().Add(8 * time.Hour)
-										}
-									}
-									if 0 < tmpMyTopUserRecommendUserLocationLastBalanceAmount {
-										err = ruc.locationRepo.UpdateLocation(ctx, tmpMyTopUserRecommendUserLocationLast.ID, tmpMyTopUserRecommendUserLocationLast.Status, tmpMyTopUserRecommendUserLocationLastBalanceAmount, tmpMyTopUserRecommendUserLocationLast.StopDate) // 分红占位数据修改
-										if nil != err {
-											return err
-										}
-									}
-									amount -= tmpMyTopUserRecommendUserLocationLastBalanceAmount // 扣除
-
-									if 0 < tmpMyTopUserRecommendUserLocationLastBalanceAmount && "running" == tmpMyTopUserRecommendUserLocationLastStatus && tmpMyTopUserRecommendUserLocationLastCurrent < tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 这次还能分红
-										tmpCurrentTopAmount := tmpMyTopUserRecommendUserLocationLast.CurrentMax - tmpMyTopUserRecommendUserLocationLastCurrent // 最大可分红额度
-										rewardTopAmount := tmpMyTopUserRecommendUserLocationLastBalanceAmount
-										if tmpCurrentTopAmount < tmpMyTopUserRecommendUserLocationLastBalanceAmount { // 大于最大可分红额度
-											rewardTopAmount = tmpCurrentTopAmount
-										}
-										_, err = ruc.userBalanceRepo.NormalRecommendTopReward(ctx, tmpMyTopUserRecommendUserId, rewardTopAmount, currentLocation.ID, int64(i+1)) // 直推人奖励
-										if nil != err {
-											return err
-										}
-									}
-								}
-
 							}
-
-							fmt.Println(recommendNeedLast)
-
-							for i := 1; i <= len(tmpTopRecommendUserIds)-1; i++ {
-								// 有占位信息，推荐人推荐人的上一代
-								if len(tmpTopRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
-									break
+							if 0 < tmpMyTopUserRecommendUserLocationLastBalanceAmount {
+								err = ruc.locationRepo.UpdateLocation(ctx, tmpMyTopUserRecommendUserLocationLast.ID, tmpMyTopUserRecommendUserLocationLast.Status, tmpMyTopUserRecommendUserLocationLastBalanceAmount, tmpMyTopUserRecommendUserLocationLast.StopDate) // 分红占位数据修改
+								if nil != err {
+									return err
 								}
-								tmpMyTopUserRecommendUserId, _ := strconv.ParseInt(tmpTopRecommendUserIds[len(tmpTopRecommendUserIds)-i], 10, 64) // 最后一位是直推人
-								if 0 >= tmpMyTopUserRecommendUserId || 0 >= recommendNeedLast {
-									break
+							}
+							amount -= tmpMyTopUserRecommendUserLocationLastBalanceAmount // 扣除
+
+							if 0 < tmpMyTopUserRecommendUserLocationLastBalanceAmount && "running" == tmpMyTopUserRecommendUserLocationLastStatus && tmpMyTopUserRecommendUserLocationLastCurrent < tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 这次还能分红
+								tmpCurrentTopAmount := tmpMyTopUserRecommendUserLocationLast.CurrentMax - tmpMyTopUserRecommendUserLocationLastCurrent // 最大可分红额度
+								rewardTopAmount := tmpMyTopUserRecommendUserLocationLastBalanceAmount
+								if tmpCurrentTopAmount < tmpMyTopUserRecommendUserLocationLastBalanceAmount { // 大于最大可分红额度
+									rewardTopAmount = tmpCurrentTopAmount
 								}
-								fmt.Println(tmpMyTopUserRecommendUserId)
-
-								myUserTopRecommendUserInfo, _ := ruc.userInfoRepo.GetUserInfoByUserId(ctx, tmpMyTopUserRecommendUserId)
-								if nil == myUserTopRecommendUserInfo {
-									continue
-								}
-
-								tmpMyTopUserRecommendUserLocationLast, _ := ruc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
-								if nil == tmpMyTopUserRecommendUserLocationLast {
-									continue
-								}
-
-								var tmpMyRecommendAmount int64
-								if 5 == myUserTopRecommendUserInfo.Vip { // 会员等级分红
-									if recommendNeedVip5 > recommendNeedLast {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-									} else {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip5
-									}
-									recommendNeedLast -= recommendNeedVip5
-								} else if 4 == myUserTopRecommendUserInfo.Vip {
-									if recommendNeedVip4 > recommendNeedLast {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-									} else {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip4
-									}
-									recommendNeedLast -= recommendNeedVip4
-								} else if 3 == myUserTopRecommendUserInfo.Vip {
-									if recommendNeedVip3 > recommendNeedLast {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-									} else {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip3
-									}
-									recommendNeedLast -= recommendNeedVip3
-								} else if 2 == myUserTopRecommendUserInfo.Vip {
-									if recommendNeedVip2 > recommendNeedLast {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-									} else {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip2
-									}
-									recommendNeedLast -= recommendNeedVip2
-								} else if 1 == myUserTopRecommendUserInfo.Vip {
-									if recommendNeedVip1 > recommendNeedLast {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-									} else {
-										tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip1
-									}
-									recommendNeedLast -= recommendNeedVip1
-								} else {
-									continue
-								}
-								fmt.Println(tmpMyRecommendAmount)
-								if 0 < tmpMyRecommendAmount { // 扣除推荐人分红
-									tmpStatus := tmpMyTopUserRecommendUserLocationLast.Status // 现在还在运行中
-									tmpCurrent := tmpMyTopUserRecommendUserLocationLast.Current
-
-									tmpBalanceAmount := tmpMyRecommendAmount // 记录下一次
-									tmpMyTopUserRecommendUserLocationLast.Status = "running"
-									tmpMyTopUserRecommendUserLocationLast.Current += tmpBalanceAmount
-									if tmpMyTopUserRecommendUserLocationLast.Current >= tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 占位分红人分满停止
-										tmpMyTopUserRecommendUserLocationLast.Status = "stop"
-										if "running" == tmpStatus {
-											tmpMyTopUserRecommendUserLocationLast.StopDate = time.Now().UTC().Add(8 * time.Hour)
-										}
-									}
-									if 0 < tmpBalanceAmount {
-										err = ruc.locationRepo.UpdateLocation(ctx, tmpMyTopUserRecommendUserLocationLast.ID, tmpMyTopUserRecommendUserLocationLast.Status, tmpBalanceAmount, tmpMyTopUserRecommendUserLocationLast.StopDate) // 分红占位数据修改
-										if nil != err {
-											return err
-										}
-									}
-									amount -= tmpBalanceAmount                                                                                           // 扣除
-									if 0 < tmpBalanceAmount && "running" == tmpStatus && tmpCurrent < tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 这次还能分红
-										tmpCurrentAmount := tmpMyTopUserRecommendUserLocationLast.CurrentMax - tmpCurrent // 最大可分红额度
-										rewardAmount := tmpBalanceAmount
-										if tmpCurrentAmount < tmpBalanceAmount { // 大于最大可分红额度
-											rewardAmount = tmpCurrentAmount
-										}
-										_, err = ruc.userBalanceRepo.RecommendReward(ctx, tmpMyTopUserRecommendUserId, rewardAmount, currentLocation.ID) // 推荐人奖励
-										if nil != err {
-											return err
-										}
-
-									}
-
+								_, err = ruc.userBalanceRepo.NormalRecommendTopReward(ctx, tmpMyTopUserRecommendUserId, rewardTopAmount, currentLocation.ID, int64(i)) // 直推人奖励
+								if nil != err {
+									return err
 								}
 							}
 						}
+
 					}
+
+					fmt.Println(recommendNeedLast)
+
+					for i := 2; i <= len(tmpRecommendUserIds)-1; i++ {
+						// 有占位信息，推荐人推荐人的上一代
+						if len(tmpRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
+							break
+						}
+						tmpMyTopUserRecommendUserId, _ := strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-i], 10, 64) // 最后一位是直推人
+						if 0 >= tmpMyTopUserRecommendUserId || 0 >= recommendNeedLast {
+							break
+						}
+						fmt.Println(tmpMyTopUserRecommendUserId)
+
+						myUserTopRecommendUserInfo, _ := ruc.userInfoRepo.GetUserInfoByUserId(ctx, tmpMyTopUserRecommendUserId)
+						if nil == myUserTopRecommendUserInfo {
+							continue
+						}
+
+						tmpMyTopUserRecommendUserLocationLast, _ := ruc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
+						if nil == tmpMyTopUserRecommendUserLocationLast {
+							continue
+						}
+
+						var tmpMyRecommendAmount int64
+						if 5 == myUserTopRecommendUserInfo.Vip { // 会员等级分红
+							if recommendNeedVip5 > recommendNeedLast {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
+							} else {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip5
+							}
+							recommendNeedLast -= recommendNeedVip5
+						} else if 4 == myUserTopRecommendUserInfo.Vip {
+							if recommendNeedVip4 > recommendNeedLast {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
+							} else {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip4
+							}
+							recommendNeedLast -= recommendNeedVip4
+						} else if 3 == myUserTopRecommendUserInfo.Vip {
+							if recommendNeedVip3 > recommendNeedLast {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
+							} else {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip3
+							}
+							recommendNeedLast -= recommendNeedVip3
+						} else if 2 == myUserTopRecommendUserInfo.Vip {
+							if recommendNeedVip2 > recommendNeedLast {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
+							} else {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip2
+							}
+							recommendNeedLast -= recommendNeedVip2
+						} else if 1 == myUserTopRecommendUserInfo.Vip {
+							if recommendNeedVip1 > recommendNeedLast {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
+							} else {
+								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip1
+							}
+							recommendNeedLast -= recommendNeedVip1
+						} else {
+							continue
+						}
+						fmt.Println(tmpMyRecommendAmount)
+						if 0 < tmpMyRecommendAmount { // 扣除推荐人分红
+							tmpStatus := tmpMyTopUserRecommendUserLocationLast.Status // 现在还在运行中
+							tmpCurrent := tmpMyTopUserRecommendUserLocationLast.Current
+
+							tmpBalanceAmount := tmpMyRecommendAmount // 记录下一次
+							tmpMyTopUserRecommendUserLocationLast.Status = "running"
+							tmpMyTopUserRecommendUserLocationLast.Current += tmpBalanceAmount
+							if tmpMyTopUserRecommendUserLocationLast.Current >= tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 占位分红人分满停止
+								tmpMyTopUserRecommendUserLocationLast.Status = "stop"
+								if "running" == tmpStatus {
+									tmpMyTopUserRecommendUserLocationLast.StopDate = time.Now().UTC().Add(8 * time.Hour)
+								}
+							}
+							if 0 < tmpBalanceAmount {
+								err = ruc.locationRepo.UpdateLocation(ctx, tmpMyTopUserRecommendUserLocationLast.ID, tmpMyTopUserRecommendUserLocationLast.Status, tmpBalanceAmount, tmpMyTopUserRecommendUserLocationLast.StopDate) // 分红占位数据修改
+								if nil != err {
+									return err
+								}
+							}
+							amount -= tmpBalanceAmount                                                                                           // 扣除
+							if 0 < tmpBalanceAmount && "running" == tmpStatus && tmpCurrent < tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 这次还能分红
+								tmpCurrentAmount := tmpMyTopUserRecommendUserLocationLast.CurrentMax - tmpCurrent // 最大可分红额度
+								rewardAmount := tmpBalanceAmount
+								if tmpCurrentAmount < tmpBalanceAmount { // 大于最大可分红额度
+									rewardAmount = tmpCurrentAmount
+								}
+								_, err = ruc.userBalanceRepo.RecommendReward(ctx, tmpMyTopUserRecommendUserId, rewardAmount, currentLocation.ID) // 推荐人奖励
+								if nil != err {
+									return err
+								}
+
+							}
+
+						}
+					}
+
 				}
 
 			}
