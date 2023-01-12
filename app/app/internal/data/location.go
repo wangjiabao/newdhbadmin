@@ -74,8 +74,8 @@ func (lr *LocationRepo) GetLocationDaily(ctx context.Context) ([]*biz.Location, 
 	instance := lr.data.db.Table("location")
 	today := time.Now().UTC()
 	yesterday := today.Add(-24 * time.Hour)
-	timeStart := time.Date(today.Year(), today.Month(), today.Day(), 2, 0, 0, 0, time.UTC)
-	timeEnd := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 2, 0, 0, 0, time.UTC)
+	timeStart := time.Date(today.Year(), today.Month(), today.Day(), 14, 0, 0, 0, time.UTC)
+	timeEnd := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 14, 0, 0, 0, time.UTC)
 
 	instance = instance.Where("created_at>=?", timeEnd)
 	instance = instance.Where("created_at<?", timeStart)
