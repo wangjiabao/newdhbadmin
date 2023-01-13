@@ -381,8 +381,17 @@ func (u *UserRepo) GetUserCount(ctx context.Context) (int64, error) {
 func (u *UserRepo) GetUserCountToday(ctx context.Context) (int64, error) {
 	var count int64
 	now := time.Now().UTC()
-	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	todayEnd := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.UTC)
+	var startDate time.Time
+	var endDate time.Time
+	if 14 <= now.Hour() {
+		startDate = now
+		endDate = now.AddDate(0, 0, 1)
+	} else {
+		startDate = now.AddDate(0, 0, -1)
+		endDate = now
+	}
+	todayStart := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 16, 0, 0, 0, time.UTC)
+	todayEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 15, 59, 59, 0, time.UTC)
 
 	if err := u.data.db.Table("user").
 		Where("created_at>=?", todayStart).Where("created_at<=?", todayEnd).Count(&count).Error; err != nil {
@@ -1895,9 +1904,20 @@ func (ub UserBalanceRepo) GetUserBalanceRecordUsdtTotal(ctx context.Context) (in
 // GetUserBalanceRecordUsdtTotalToday .
 func (ub UserBalanceRepo) GetUserBalanceRecordUsdtTotalToday(ctx context.Context) (int64, error) {
 	var total UserBalanceTotal
+
 	now := time.Now().UTC()
-	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	todayEnd := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.UTC)
+	var startDate time.Time
+	var endDate time.Time
+	if 14 <= now.Hour() {
+		startDate = now
+		endDate = now.AddDate(0, 0, 1)
+	} else {
+		startDate = now.AddDate(0, 0, -1)
+		endDate = now
+	}
+	todayStart := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 16, 0, 0, 0, time.UTC)
+	todayEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 15, 59, 59, 0, time.UTC)
+
 	if err := ub.data.db.Table("user_balance_record").
 		Where("type=?", "deposit").
 		Where("coin_type=?", "usdt").
@@ -1917,8 +1937,17 @@ func (ub UserBalanceRepo) GetUserBalanceRecordUsdtTotalToday(ctx context.Context
 func (ub UserBalanceRepo) GetUserWithdrawUsdtTotalToday(ctx context.Context) (int64, error) {
 	var total UserBalanceTotal
 	now := time.Now().UTC()
-	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	todayEnd := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.UTC)
+	var startDate time.Time
+	var endDate time.Time
+	if 14 <= now.Hour() {
+		startDate = now
+		endDate = now.AddDate(0, 0, 1)
+	} else {
+		startDate = now.AddDate(0, 0, -1)
+		endDate = now
+	}
+	todayStart := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 16, 0, 0, 0, time.UTC)
+	todayEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 15, 59, 59, 0, time.UTC)
 	if err := ub.data.db.Table("user_balance_record").
 		Where("type=?", "withdraw").
 		Where("coin_type=?", "usdt").

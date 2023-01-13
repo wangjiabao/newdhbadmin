@@ -72,13 +72,22 @@ func (lr *LocationRepo) GetLocationDaily(ctx context.Context) ([]*biz.Location, 
 	var locations []*Location
 	res := make([]*biz.Location, 0)
 	instance := lr.data.db.Table("location")
-	today := time.Now().UTC()
-	yesterday := today.Add(-24 * time.Hour)
-	timeStart := time.Date(today.Year(), today.Month(), today.Day(), 14, 0, 0, 0, time.UTC)
-	timeEnd := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 14, 0, 0, 0, time.UTC)
 
-	instance = instance.Where("created_at>=?", timeEnd)
-	instance = instance.Where("created_at<?", timeStart)
+	now := time.Now().UTC()
+	var startDate time.Time
+	var endDate time.Time
+	if 14 <= now.Hour() {
+		startDate = now
+		endDate = now.AddDate(0, 0, 1)
+	} else {
+		startDate = now.AddDate(0, 0, -1)
+		endDate = now
+	}
+	todayStart := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 14, 0, 0, 0, time.UTC)
+	todayEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 14, 0, 0, 0, time.UTC)
+
+	instance = instance.Where("created_at>=?", todayStart)
+	instance = instance.Where("created_at<?", todayEnd)
 	if err := instance.Order("id desc").Find(&locations).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return res, errors.NotFound("LOCATION_NOT_FOUND", "location not found")

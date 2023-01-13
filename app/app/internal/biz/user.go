@@ -1728,7 +1728,6 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 		recommendNeedVip3   int64
 		recommendNeedVip4   int64
 		recommendNeedVip5   int64
-		recommendNeedOne    int64
 		recommendNeedTwo    int64
 		recommendNeedThree  int64
 		recommendNeedFour   int64
@@ -1746,8 +1745,6 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 		for _, vConfig := range configs {
 			if "recommend_need" == vConfig.KeyName {
 				recommendNeed, _ = strconv.ParseInt(vConfig.Value, 10, 64)
-			} else if "recommend_need_one" == vConfig.KeyName {
-				recommendNeedOne, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			} else if "recommend_need_two" == vConfig.KeyName {
 				recommendNeedTwo, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			} else if "recommend_need_three" == vConfig.KeyName {
@@ -2027,7 +2024,8 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 
 				if 2 <= len(tmpRecommendUserIds) {
 					fmt.Println(tmpRecommendUserIds)
-					for i := 1; i <= 6; i++ {
+					lasAmount := currentValue / 100 * recommendNeed
+					for i := 2; i <= 6; i++ {
 						// 有占位信息，推荐人推荐人的上一代
 						if len(tmpRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
 							break
@@ -2035,21 +2033,20 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 						tmpMyTopUserRecommendUserId, _ := strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-i], 10, 64) // 最后一位是直推人
 
 						var tmpMyTopUserRecommendUserLocationLastBalanceAmount int64
-						if i == 1 {
-							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedOne // 记录下一次
-						} else if i == 2 {
-							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedTwo // 记录下一次
+						if i == 2 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedTwo // 记录下一次
 						} else if i == 3 {
-							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedThree // 记录下一次
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedThree // 记录下一次
 						} else if i == 4 {
-							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedFour // 记录下一次
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedFour // 记录下一次
 						} else if i == 5 {
-							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedFive // 记录下一次
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedFive // 记录下一次
 						} else if i == 6 {
-							tmpMyTopUserRecommendUserLocationLastBalanceAmount = currentValue / 10000 * recommendNeed * recommendNeedSix // 记录下一次
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedSix // 记录下一次
 						} else {
 							break
 						}
+						lasAmount = tmpMyTopUserRecommendUserLocationLastBalanceAmount
 
 						tmpMyTopUserRecommendUserLocationLast, _ := uuc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
 						if nil != tmpMyTopUserRecommendUserLocationLast {
