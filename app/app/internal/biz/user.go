@@ -1593,7 +1593,7 @@ func (uuc *UserUseCase) AdminFeeDaily(ctx context.Context, req *v1.AdminDailyFee
 	}
 
 	// 全网手续费
-	userLocations, err = uuc.locationRepo.GetLocationDaily(ctx)
+	userLocations, err = uuc.locationRepo.GetLocationDailyYesterday(ctx)
 	if nil != err {
 		return nil, err
 	}

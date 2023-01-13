@@ -67,13 +67,13 @@ func (lr *LocationRepo) CreateLocation(ctx context.Context, rel *biz.Location) (
 	}, nil
 }
 
-// GetLocationDaily .
-func (lr *LocationRepo) GetLocationDaily(ctx context.Context) ([]*biz.Location, error) {
+// GetLocationDailyYesterday .
+func (lr *LocationRepo) GetLocationDailyYesterday(ctx context.Context) ([]*biz.Location, error) {
 	var locations []*Location
 	res := make([]*biz.Location, 0)
 	instance := lr.data.db.Table("location")
 
-	now := time.Now().UTC()
+	now := time.Now().UTC().AddDate(0, 0, -1)
 	var startDate time.Time
 	var endDate time.Time
 	if 14 <= now.Hour() {

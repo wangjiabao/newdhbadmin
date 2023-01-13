@@ -58,7 +58,7 @@ type LocationRepo interface {
 	CreateLocation(ctx context.Context, rel *Location) (*Location, error)
 	GetLocationLast(ctx context.Context) (*Location, error)
 	GetMyLocationLast(ctx context.Context, userId int64) (*Location, error)
-	GetLocationDaily(ctx context.Context) ([]*Location, error)
+	GetLocationDailyYesterday(ctx context.Context) ([]*Location, error)
 	GetMyStopLocationLast(ctx context.Context, userId int64) (*Location, error)
 	GetMyLocationRunningLast(ctx context.Context, userId int64) (*Location, error)
 	GetLocationsByUserId(ctx context.Context, userId int64) ([]*Location, error)
