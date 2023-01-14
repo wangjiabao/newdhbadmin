@@ -137,6 +137,7 @@ type UserBalanceRepo interface {
 	RecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64) (int64, error)
 	SystemWithdrawReward(ctx context.Context, amount int64, locationId int64) error
 	SystemReward(ctx context.Context, amount int64, locationId int64) error
+	SystemDailyReward(ctx context.Context, amount int64, locationId int64) error
 	SystemFee(ctx context.Context, amount int64, locationId int64) error
 	UserFee(ctx context.Context, userId int64, amount int64) (int64, error)
 	UserDailyFee(ctx context.Context, userId int64, amount int64) (int64, error)
@@ -1609,28 +1610,28 @@ func (uuc *UserUseCase) AdminFeeDaily(ctx context.Context, req *v1.AdminDailyFee
 	}
 
 	fee = fee / 10000 * 3 * 70
+	systemFee := fee
+	if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+		for k, v := range userSortRecommendRewards {
+			// 获取当前用户的占位信息，已经有运行中的跳过
+			myLocationLast, err = uuc.locationRepo.GetMyLocationLast(ctx, v.UserId)
+			if nil == myLocationLast { // 无占位信息
+				continue
+			}
 
-	for k, v := range userSortRecommendRewards {
-		// 获取当前用户的占位信息，已经有运行中的跳过
-		myLocationLast, err = uuc.locationRepo.GetMyLocationLast(ctx, v.UserId)
-		if nil == myLocationLast { // 无占位信息
-			continue
-		}
+			var tmpFee int64
+			if 0 == k {
+				tmpFee = fee / 100 * 40
+			} else if 1 == k {
+				tmpFee = fee / 100 * 30
+			} else if 2 == k {
+				tmpFee = fee / 100 * 20
+			} else if 3 == k {
+				tmpFee = fee / 100 * 10
+			} else {
+				continue
+			}
 
-		var tmpFee int64
-		if 0 == k {
-			tmpFee = fee / 100 * 40
-		} else if 1 == k {
-			tmpFee = fee / 100 * 30
-		} else if 2 == k {
-			tmpFee = fee / 100 * 20
-		} else if 3 == k {
-			tmpFee = fee / 100 * 10
-		} else {
-			continue
-		}
-
-		if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
 			tmpCurrentStatus := myLocationLast.Status // 现在还在运行中
 			tmpCurrent := myLocationLast.Current
 			tmpBalanceAmount := tmpFee
@@ -1642,6 +1643,8 @@ func (uuc *UserUseCase) AdminFeeDaily(ctx context.Context, req *v1.AdminDailyFee
 				}
 				myLocationLast.Status = "stop"
 			}
+
+			systemFee -= fee
 
 			if 0 < tmpBalanceAmount {
 				err = uuc.locationRepo.UpdateLocation(ctx, myLocationLast.ID, myLocationLast.Status, tmpBalanceAmount, myLocationLast.StopDate) // 分红占位数据修改
@@ -1662,11 +1665,11 @@ func (uuc *UserUseCase) AdminFeeDaily(ctx context.Context, req *v1.AdminDailyFee
 					}
 				}
 			}
-
-			return nil
-		}); nil != err {
-			return nil, err
 		}
+
+		return nil
+	}); nil != err {
+		return nil, err
 	}
 
 	return &v1.AdminDailyFeeReply{}, err
@@ -1730,7 +1733,6 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 		recommendNeedVip3   int64
 		recommendNeedVip4   int64
 		recommendNeedVip5   int64
-		recommendNeedOne    int64
 		recommendNeedTwo    int64
 		recommendNeedThree  int64
 		recommendNeedFour   int64
@@ -1748,8 +1750,6 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 		for _, vConfig := range configs {
 			if "recommend_need" == vConfig.KeyName {
 				recommendNeed, _ = strconv.ParseInt(vConfig.Value, 10, 64)
-			} else if "recommend_need_one" == vConfig.KeyName {
-				recommendNeedOne, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			} else if "recommend_need_two" == vConfig.KeyName {
 				recommendNeedTwo, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			} else if "recommend_need_three" == vConfig.KeyName {
@@ -2035,7 +2035,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 				if 2 <= len(tmpRecommendUserIds) {
 					fmt.Println(tmpRecommendUserIds)
 					lasAmount := currentValue / 100 * recommendNeed
-					for i := 1; i <= 6; i++ {
+					for i := 2; i <= 6; i++ {
 						// 有占位信息，推荐人推荐人的上一代
 						if len(tmpRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
 							break
@@ -2043,9 +2043,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 						tmpMyTopUserRecommendUserId, _ := strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-i], 10, 64) // 最后一位是直推人
 
 						var tmpMyTopUserRecommendUserLocationLastBalanceAmount int64
-						if i == 1 {
-							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedOne // 记录下一次
-						} else if i == 2 {
+						if i == 2 {
 							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedTwo // 记录下一次
 						} else if i == 3 {
 							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedThree // 记录下一次

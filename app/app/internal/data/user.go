@@ -1342,6 +1342,26 @@ func (ub *UserBalanceRepo) SystemReward(ctx context.Context, amount int64, locat
 	return nil
 }
 
+// SystemDailyReward .
+func (ub *UserBalanceRepo) SystemDailyReward(ctx context.Context, amount int64, locationId int64) error {
+	var (
+		reward Reward
+		err    error
+	)
+	reward.UserId = 999999999
+	reward.Amount = amount
+	reward.BalanceRecordId = 999999999
+	reward.Type = "system_fee_daily" // 本次分红的行为类型
+	reward.TypeRecordId = locationId
+	reward.Reason = "system_fee_daily" // 给我分红的理由
+	err = ub.data.DB(ctx).Table("reward").Create(&reward).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // SystemWithdrawReward .
 func (ub *UserBalanceRepo) SystemWithdrawReward(ctx context.Context, amount int64, locationId int64) error {
 	var (
