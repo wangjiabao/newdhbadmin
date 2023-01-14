@@ -424,25 +424,30 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 					}
 				}
 
-				var recommendNeedMax int64 = 10
-				var recommendNeedLast int64 = 10
+				var recommendNeedLast int64 = 0
+				var recommendLevel int64
 				if nil != myUserRecommendUserLocationLast {
 					var tmpMyRecommendAmount int64
 					if 5 == myUserRecommendUserInfo.Vip { // 会员等级分红
 						tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip5
-						recommendNeedLast = recommendNeedMax - recommendNeedVip5
+						recommendNeedLast = recommendNeedVip5
+						recommendLevel = 5
 					} else if 4 == myUserRecommendUserInfo.Vip {
 						tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip4
-						recommendNeedLast = recommendNeedMax - recommendNeedVip4
+						recommendNeedLast = recommendNeedVip4
+						recommendLevel = 4
 					} else if 3 == myUserRecommendUserInfo.Vip {
 						tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip3
-						recommendNeedLast = recommendNeedMax - recommendNeedVip3
+						recommendNeedLast = recommendNeedVip3
+						recommendLevel = 3
 					} else if 2 == myUserRecommendUserInfo.Vip {
 						tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip2
-						recommendNeedLast = recommendNeedMax - recommendNeedVip2
+						recommendNeedLast = recommendNeedVip2
+						recommendLevel = 2
 					} else if 1 == myUserRecommendUserInfo.Vip {
 						tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip1
-						recommendNeedLast = recommendNeedMax - recommendNeedVip1
+						recommendNeedLast = recommendNeedVip1
+						recommendLevel = 1
 					}
 					if 0 < tmpMyRecommendAmount { // 扣除推荐人分红
 						tmpStatus := myUserRecommendUserLocationLast.Status // 现在还在运行中
@@ -550,8 +555,9 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 						if len(tmpRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
 							break
 						}
+
 						tmpMyTopUserRecommendUserId, _ := strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-i], 10, 64) // 最后一位是直推人
-						if 0 >= tmpMyTopUserRecommendUserId || 0 >= recommendNeedLast {
+						if 0 >= tmpMyTopUserRecommendUserId || 0 >= 10-recommendNeedLast {
 							break
 						}
 						fmt.Println(tmpMyTopUserRecommendUserId)
@@ -561,6 +567,10 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 							continue
 						}
 
+						if recommendLevel >= myUserTopRecommendUserInfo.Vip {
+							break
+						}
+
 						tmpMyTopUserRecommendUserLocationLast, _ := ruc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
 						if nil == tmpMyTopUserRecommendUserLocationLast {
 							continue
@@ -568,43 +578,25 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 
 						var tmpMyRecommendAmount int64
 						if 5 == myUserTopRecommendUserInfo.Vip { // 会员等级分红
-							if recommendNeedVip5 > recommendNeedLast {
-								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-							} else {
-								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip5
-							}
-							recommendNeedLast -= recommendNeedVip5
+							tmpMyRecommendAmount = currentValue / 100 * (recommendNeedVip5 - recommendNeedLast)
+							recommendNeedLast = recommendNeedVip5
 						} else if 4 == myUserTopRecommendUserInfo.Vip {
-							if recommendNeedVip4 > recommendNeedLast {
-								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-							} else {
-								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip4
-							}
-							recommendNeedLast -= recommendNeedVip4
+							tmpMyRecommendAmount = currentValue / 100 * (recommendNeedVip4 - recommendNeedLast)
+							recommendNeedLast = recommendNeedVip4
 						} else if 3 == myUserTopRecommendUserInfo.Vip {
-							if recommendNeedVip3 > recommendNeedLast {
-								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-							} else {
-								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip3
-							}
-							recommendNeedLast -= recommendNeedVip3
+							tmpMyRecommendAmount = currentValue / 100 * (recommendNeedVip3 - recommendNeedLast)
+							recommendNeedLast = recommendNeedVip3
 						} else if 2 == myUserTopRecommendUserInfo.Vip {
-							if recommendNeedVip2 > recommendNeedLast {
-								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-							} else {
-								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip2
-							}
-							recommendNeedLast -= recommendNeedVip2
+							tmpMyRecommendAmount = currentValue / 100 * (recommendNeedVip2 - recommendNeedLast)
+							recommendNeedLast = recommendNeedVip2
 						} else if 1 == myUserTopRecommendUserInfo.Vip {
-							if recommendNeedVip1 > recommendNeedLast {
-								tmpMyRecommendAmount = currentValue / 100 * recommendNeedLast
-							} else {
-								tmpMyRecommendAmount = currentValue / 100 * recommendNeedVip1
-							}
-							recommendNeedLast -= recommendNeedVip1
+							tmpMyRecommendAmount = currentValue / 100 * (recommendNeedVip1 - recommendNeedLast)
+							recommendNeedLast = recommendNeedVip1
 						} else {
 							continue
 						}
+						recommendLevel = myUserTopRecommendUserInfo.Vip
+
 						fmt.Println(tmpMyRecommendAmount)
 						if 0 < tmpMyRecommendAmount { // 扣除推荐人分红
 							tmpStatus := tmpMyTopUserRecommendUserLocationLast.Status // 现在还在运行中
