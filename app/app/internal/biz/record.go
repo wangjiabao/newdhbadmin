@@ -424,7 +424,7 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 					}
 				}
 
-				var recommendNeedLast int64 = 0
+				var recommendNeedLast int64
 				var recommendLevel int64
 				if nil != myUserRecommendUserLocationLast {
 					var tmpMyRecommendAmount int64
@@ -567,8 +567,12 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 							continue
 						}
 
-						if recommendLevel >= myUserTopRecommendUserInfo.Vip {
+						if recommendLevel > myUserTopRecommendUserInfo.Vip {
 							break
+						}
+
+						if recommendLevel == myUserTopRecommendUserInfo.Vip {
+							continue
 						}
 
 						tmpMyTopUserRecommendUserLocationLast, _ := ruc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
@@ -624,7 +628,7 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 								if tmpCurrentAmount < tmpBalanceAmount { // 大于最大可分红额度
 									rewardAmount = tmpCurrentAmount
 								}
-								_, err = ruc.userBalanceRepo.RecommendReward(ctx, tmpMyTopUserRecommendUserId, rewardAmount, currentLocation.ID) // 推荐人奖励
+								_, err = ruc.userBalanceRepo.RecommendTopReward(ctx, tmpMyTopUserRecommendUserId, rewardAmount, currentLocation.ID, recommendLevel) // 推荐人奖励
 								if nil != err {
 									return err
 								}

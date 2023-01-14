@@ -134,12 +134,14 @@ type UserBalanceRepo interface {
 	LocationReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string) (int64, error)
 	WithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string) (int64, error)
 	RecommendReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error)
+	RecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64) (int64, error)
 	SystemWithdrawReward(ctx context.Context, amount int64, locationId int64) error
 	SystemReward(ctx context.Context, amount int64, locationId int64) error
 	SystemFee(ctx context.Context, amount int64, locationId int64) error
 	UserFee(ctx context.Context, userId int64, amount int64) (int64, error)
 	UserDailyFee(ctx context.Context, userId int64, amount int64) (int64, error)
 	RecommendWithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error)
+	RecommendWithdrawTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64) (int64, error)
 	NormalRecommendReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error)
 	NormalRecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, reasonId int64) (int64, error)
 	NormalWithdrawRecommendReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error)
@@ -1707,7 +1709,7 @@ func (uuc *UserUseCase) AdminAll(ctx context.Context, req *v1.AdminAllRequest) (
 }
 
 func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdrawRequest) (*v1.AdminWithdrawReply, error) {
-	//time.Sleep(30 * time.Second) // 错开时间和充值
+	time.Sleep(30 * time.Second) // 错开时间和充值
 	var (
 		currentValue                    int64
 		systemAmount                    int64
@@ -1965,7 +1967,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 					}
 				}
 
-				var recommendNeedLast int64 = 0
+				var recommendNeedLast int64
 				var recommendLevel int64
 				if nil != myUserRecommendUserLocationLast {
 					var tmpMyRecommendAmount int64
@@ -2107,8 +2109,12 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 							continue
 						}
 
-						if recommendLevel >= myUserTopRecommendUserInfo.Vip {
+						if recommendLevel > myUserTopRecommendUserInfo.Vip {
 							break
+						}
+
+						if recommendLevel == myUserTopRecommendUserInfo.Vip {
+							continue
 						}
 
 						tmpMyTopUserRecommendUserLocationLast, _ := uuc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
@@ -2164,7 +2170,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 								if tmpCurrentAmount < tmpBalanceAmount { // 大于最大可分红额度
 									rewardAmount = tmpCurrentAmount
 								}
-								_, err = uuc.ubRepo.RecommendWithdrawReward(ctx, tmpMyTopUserRecommendUserId, rewardAmount, myLocationLast.ID) // 推荐人奖励
+								_, err = uuc.ubRepo.RecommendWithdrawTopReward(ctx, tmpMyTopUserRecommendUserId, rewardAmount, myLocationLast.ID, recommendLevel) // 推荐人奖励
 								if nil != err {
 									return err
 								}
