@@ -197,11 +197,11 @@ func (a *AppService) Deposit(ctx context.Context, req *v1.DepositRequest) (*v1.D
 			//	continue
 			//}
 
-			if "500000000000000000" == vDepositUsdtResult.Value {
+			if "50000000000000000000" == vDepositUsdtResult.Value {
 
-			} else if "1000000000000000000" == vDepositUsdtResult.Value {
+			} else if "100000000000000000000" == vDepositUsdtResult.Value {
 
-			} else if "3000000000000000000" == vDepositUsdtResult.Value {
+			} else if "300000000000000000000" == vDepositUsdtResult.Value {
 
 			} else {
 				continue
@@ -253,7 +253,7 @@ func requestEthDepositResult(offset int64, page int64, contractAddress string) (
 	data.Set("module", "account")
 	data.Set("action", "tokentx")
 	data.Set("contractaddress", contractAddress)
-	data.Set("address", "0x61D32CA0f23789FA7AEFB5ED02C6311cC7FfE53c")
+	data.Set("address", "0x12ad46402226ebf2b5dff48485bd0b1eb84cabce")
 	data.Set("sort", "desc")
 	data.Set("offset", strconv.FormatInt(offset, 10))
 	data.Set("page", strconv.FormatInt(page, 10))
@@ -295,7 +295,7 @@ func requestEthDepositResult(offset int64, page int64, contractAddress string) (
 
 	res := make(map[string]*eth, 0)
 	for _, v := range i.Result {
-		if "0x61D32CA0f23789FA7AEFB5ED02C6311cC7FfE53c" == v.To { // 接收者
+		if "0x12ad46402226ebf2b5dff48485bd0b1eb84cabce" == v.To { // 接收者
 			res[v.Hash] = v
 		}
 	}
