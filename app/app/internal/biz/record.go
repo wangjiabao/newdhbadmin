@@ -243,17 +243,17 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 			locationCurrentLevel = 1
 			locationCurrentMax = 2500000000000
 			currentValue = 500000000000
-			dhbAmount = 50000000000000
+			dhbAmount = 500000000000
 		} else if "100000000000000000000" == v.Amount {
 			locationCurrentLevel = 2
 			locationCurrentMax = 5000000000000
 			currentValue = 1000000000000
-			dhbAmount = 100000000000000
+			dhbAmount = 1000000000000
 		} else if "300000000000000000000" == v.Amount {
 			locationCurrentLevel = 3
 			locationCurrentMax = 15000000000000
 			currentValue = 3000000000000
-			dhbAmount = 300000000000000
+			dhbAmount = 3000000000000
 		} else {
 			continue
 		}
