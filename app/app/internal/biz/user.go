@@ -138,6 +138,7 @@ type UserBalanceRepo interface {
 	SystemWithdrawReward(ctx context.Context, amount int64, locationId int64) error
 	SystemReward(ctx context.Context, amount int64, locationId int64) error
 	SystemDailyReward(ctx context.Context, amount int64, locationId int64) error
+	GetSystemYesterdayDailyReward(ctx context.Context) (*Reward, error)
 	SystemFee(ctx context.Context, amount int64, locationId int64) error
 	UserFee(ctx context.Context, userId int64, amount int64) (int64, error)
 	UserDailyFee(ctx context.Context, userId int64, amount int64) (int64, error)
@@ -534,7 +535,7 @@ func (uuc *UserUseCase) RewardList(ctx context.Context, req *v1.RewardListReques
 				}
 
 				res.Rewards = append(res.Rewards, &v1.RewardListReply_List{
-					CreatedAt:      vUserReward.CreatedAt.Format("2006-01-02 15:04:05"),
+					CreatedAt:      vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 					Amount:         fmt.Sprintf("%.2f", float64(vUserReward.Amount)/float64(10000000000)),
 					LocationStatus: locations[vUserReward.ReasonLocationId].Status,
 					Type:           vUserReward.Type,
@@ -563,7 +564,7 @@ func (uuc *UserUseCase) RecommendRewardList(ctx context.Context, user *User) (*v
 	for _, vUserReward := range userRewards {
 		if "recommend" == vUserReward.Reason || "recommend_vip" == vUserReward.Reason {
 			res.Rewards = append(res.Rewards, &v1.RecommendRewardListReply_List{
-				CreatedAt: vUserReward.CreatedAt.Format("2006-01-02 15:04:05"),
+				CreatedAt: vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 				Amount:    fmt.Sprintf("%.2f", float64(vUserReward.Amount)/float64(10000000000)),
 				Type:      vUserReward.Type,
 				Reason:    vUserReward.Reason,
@@ -591,7 +592,7 @@ func (uuc *UserUseCase) FeeRewardList(ctx context.Context, user *User) (*v1.FeeR
 	for _, vUserReward := range userRewards {
 		if "fee" == vUserReward.Reason {
 			res.Rewards = append(res.Rewards, &v1.FeeRewardListReply_List{
-				CreatedAt: vUserReward.CreatedAt.Format("2006-01-02 15:04:05"),
+				CreatedAt: vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 				Amount:    fmt.Sprintf("%.2f", float64(vUserReward.Amount)/float64(10000000000)),
 			})
 		}
@@ -618,7 +619,7 @@ func (uuc *UserUseCase) WithdrawList(ctx context.Context, user *User) (*v1.Withd
 
 	for _, v := range withdraws {
 		res.Withdraw = append(res.Withdraw, &v1.WithdrawListReply_List{
-			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"),
+			CreatedAt: v.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 			Amount:    fmt.Sprintf("%.2f", float64(v.Amount)/float64(10000000000)),
 			Status:    v.Status,
 			Type:      v.Type,
@@ -749,7 +750,7 @@ func (uuc *UserUseCase) AdminRewardList(ctx context.Context, req *v1.AdminReward
 		}
 
 		res.Rewards = append(res.Rewards, &v1.AdminRewardListReply_List{
-			CreatedAt: vUserReward.CreatedAt.Format("2006-01-02 15:04:05"),
+			CreatedAt: vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 			Amount:    fmt.Sprintf("%.2f", float64(vUserReward.Amount)/float64(10000000000)),
 			Type:      vUserReward.Type,
 			Address:   tmpUser,
@@ -817,7 +818,7 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 
 		res.Users = append(res.Users, &v1.AdminUserListReply_UserList{
 			UserId:           v.ID,
-			CreatedAt:        v.CreatedAt.Format("2006-01-02 15:04:05"),
+			CreatedAt:        v.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 			Address:          v.Address,
 			BalanceUsdt:      fmt.Sprintf("%.2f", float64(userBalances[v.ID].BalanceUsdt)/float64(10000000000)),
 			BalanceDhb:       fmt.Sprintf("%.2f", float64(userBalances[v.ID].BalanceDhb)/float64(10000000000)),
@@ -887,7 +888,7 @@ func (uuc *UserUseCase) AdminLocationList(ctx context.Context, req *v1.AdminLoca
 		}
 
 		res.Locations = append(res.Locations, &v1.AdminLocationListReply_LocationList{
-			CreatedAt:    v.CreatedAt.Format("2006-01-02 15:04:05"),
+			CreatedAt:    v.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 			Address:      users[v.UserId].Address,
 			Row:          v.Row,
 			Col:          v.Col,
@@ -951,7 +952,7 @@ func (uuc *UserUseCase) AdminRecommendList(ctx context.Context, req *v1.AdminUse
 			Address:   users[v.UserId].Address,
 			Id:        v.ID,
 			UserId:    v.UserId,
-			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"),
+			CreatedAt: v.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 		})
 	}
 
@@ -1015,7 +1016,7 @@ func (uuc *UserUseCase) AdminMonthRecommend(ctx context.Context, req *v1.AdminMo
 			Address:          users[v.UserId].Address,
 			Id:               v.ID,
 			RecommendAddress: users[v.RecommendUserId].Address,
-			CreatedAt:        v.Date.Format("2006-01-02 15:04:05"),
+			CreatedAt:        v.Date.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 		})
 	}
 
@@ -1481,7 +1482,7 @@ func (uuc *UserUseCase) AdminWithdrawList(ctx context.Context, req *v1.AdminWith
 		}
 		res.Withdraw = append(res.Withdraw, &v1.AdminWithdrawListReply_List{
 			Id:        v.ID,
-			CreatedAt: v.CreatedAt.Format("2006-01-02 15:04:05"),
+			CreatedAt: v.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 			Amount:    fmt.Sprintf("%.2f", float64(v.Amount)/float64(10000000000)),
 			Status:    v.Status,
 			Type:      v.Type,
@@ -1586,6 +1587,7 @@ func (uuc *UserUseCase) AdminFeeDaily(ctx context.Context, req *v1.AdminDailyFee
 		userLocations            []*Location
 		userSortRecommendRewards []*UserSortRecommendReward
 		fee                      int64
+		reward                   *Reward
 		myLocationLast           *Location
 		err                      error
 	)
@@ -1609,8 +1611,14 @@ func (uuc *UserUseCase) AdminFeeDaily(ctx context.Context, req *v1.AdminDailyFee
 		return &v1.AdminDailyFeeReply{}, err
 	}
 
+	// 昨日剩余全网手续费
+	reward, _ = uuc.ubRepo.GetSystemYesterdayDailyReward(ctx)
+	if nil != reward {
+		fmt.Println(reward.Amount, fee)
+		fee += reward.Amount
+	}
+	systemFee := fee / 10000 * 3 * 30
 	fee = fee / 10000 * 3 * 70
-	systemFee := fee
 	if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
 		for k, v := range userSortRecommendRewards {
 			// 获取当前用户的占位信息，已经有运行中的跳过
@@ -1644,8 +1652,6 @@ func (uuc *UserUseCase) AdminFeeDaily(ctx context.Context, req *v1.AdminDailyFee
 				myLocationLast.Status = "stop"
 			}
 
-			systemFee -= fee
-
 			if 0 < tmpBalanceAmount {
 				err = uuc.locationRepo.UpdateLocation(ctx, myLocationLast.ID, myLocationLast.Status, tmpBalanceAmount, myLocationLast.StopDate) // 分红占位数据修改
 				if nil != err {
@@ -1667,6 +1673,10 @@ func (uuc *UserUseCase) AdminFeeDaily(ctx context.Context, req *v1.AdminDailyFee
 			}
 		}
 
+		err = uuc.ubRepo.SystemDailyReward(ctx, systemFee, 0)
+		if nil != err {
+			return err
+		}
 		return nil
 	}); nil != err {
 		return nil, err

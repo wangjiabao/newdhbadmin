@@ -533,7 +533,7 @@ func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdraw
 			continue
 		}
 
-		withDrawAmount := strconv.FormatInt(v.RelAmount, 10) + "00000000" // 补八个0.系统基础1是10个0
+		withDrawAmount := strconv.FormatInt(v.RelAmount, 10) + "000000" // 补八个0.系统基础1是10个0
 
 		for i := 0; i < 3; i++ {
 			//fmt.Println(11111, user.ToAddress, v.Amount, balanceInt)
