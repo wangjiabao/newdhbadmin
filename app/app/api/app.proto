@@ -146,6 +146,13 @@ service App {
 		};
 	};
 
+	rpc AdminVipUpdate (AdminVipUpdateRequest) returns (AdminVipUpdateReply) {
+		option (google.api.http) = {
+			post: "/api/admin_dhb/vip_update"
+			body: "send_body"
+		};
+	};
+
 	rpc AdminLogin (AdminLoginRequest) returns (AdminLoginReply) {
 		option (google.api.http) = {
 			post: "/api/admin_dhb/login"
@@ -556,6 +563,19 @@ message AdminConfigUpdateRequest {
 }
 
 message AdminConfigUpdateReply {
+
+}
+
+message AdminVipUpdateRequest {
+	message SendBody{
+		int64 user_id = 1;
+		int64 vip = 2;
+	}
+
+	SendBody send_body = 1;
+}
+
+message AdminVipUpdateReply {
 
 }
 

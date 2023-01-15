@@ -43,6 +43,7 @@ type AppClient interface {
 	AdminMonthRecommend(ctx context.Context, in *AdminMonthRecommendRequest, opts ...grpc.CallOption) (*AdminMonthRecommendReply, error)
 	AdminConfig(ctx context.Context, in *AdminConfigRequest, opts ...grpc.CallOption) (*AdminConfigReply, error)
 	AdminConfigUpdate(ctx context.Context, in *AdminConfigUpdateRequest, opts ...grpc.CallOption) (*AdminConfigUpdateReply, error)
+	AdminVipUpdate(ctx context.Context, in *AdminVipUpdateRequest, opts ...grpc.CallOption) (*AdminVipUpdateReply, error)
 	AdminLogin(ctx context.Context, in *AdminLoginRequest, opts ...grpc.CallOption) (*AdminLoginReply, error)
 	AdminCreateAccount(ctx context.Context, in *AdminCreateAccountRequest, opts ...grpc.CallOption) (*AdminCreateAccountReply, error)
 	AdminChangePassword(ctx context.Context, in *AdminChangePasswordRequest, opts ...grpc.CallOption) (*AdminChangePasswordReply, error)
@@ -251,6 +252,15 @@ func (c *appClient) AdminConfigUpdate(ctx context.Context, in *AdminConfigUpdate
 	return out, nil
 }
 
+func (c *appClient) AdminVipUpdate(ctx context.Context, in *AdminVipUpdateRequest, opts ...grpc.CallOption) (*AdminVipUpdateReply, error) {
+	out := new(AdminVipUpdateReply)
+	err := c.cc.Invoke(ctx, "/api.App/AdminVipUpdate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *appClient) AdminLogin(ctx context.Context, in *AdminLoginRequest, opts ...grpc.CallOption) (*AdminLoginReply, error) {
 	out := new(AdminLoginReply)
 	err := c.cc.Invoke(ctx, "/api.App/AdminLogin", in, out, opts...)
@@ -357,6 +367,7 @@ type AppServer interface {
 	AdminMonthRecommend(context.Context, *AdminMonthRecommendRequest) (*AdminMonthRecommendReply, error)
 	AdminConfig(context.Context, *AdminConfigRequest) (*AdminConfigReply, error)
 	AdminConfigUpdate(context.Context, *AdminConfigUpdateRequest) (*AdminConfigUpdateReply, error)
+	AdminVipUpdate(context.Context, *AdminVipUpdateRequest) (*AdminVipUpdateReply, error)
 	AdminLogin(context.Context, *AdminLoginRequest) (*AdminLoginReply, error)
 	AdminCreateAccount(context.Context, *AdminCreateAccountRequest) (*AdminCreateAccountReply, error)
 	AdminChangePassword(context.Context, *AdminChangePasswordRequest) (*AdminChangePasswordReply, error)
@@ -435,6 +446,9 @@ func (UnimplementedAppServer) AdminConfig(context.Context, *AdminConfigRequest) 
 }
 func (UnimplementedAppServer) AdminConfigUpdate(context.Context, *AdminConfigUpdateRequest) (*AdminConfigUpdateReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminConfigUpdate not implemented")
+}
+func (UnimplementedAppServer) AdminVipUpdate(context.Context, *AdminVipUpdateRequest) (*AdminVipUpdateReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminVipUpdate not implemented")
 }
 func (UnimplementedAppServer) AdminLogin(context.Context, *AdminLoginRequest) (*AdminLoginReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminLogin not implemented")
@@ -854,6 +868,24 @@ func _App_AdminConfigUpdate_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_AdminVipUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminVipUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminVipUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.App/AdminVipUpdate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminVipUpdate(ctx, req.(*AdminVipUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _App_AdminLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AdminLoginRequest)
 	if err := dec(in); err != nil {
@@ -1106,6 +1138,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AdminConfigUpdate",
 			Handler:    _App_AdminConfigUpdate_Handler,
+		},
+		{
+			MethodName: "AdminVipUpdate",
+			Handler:    _App_AdminVipUpdate_Handler,
 		},
 		{
 			MethodName: "AdminLogin",

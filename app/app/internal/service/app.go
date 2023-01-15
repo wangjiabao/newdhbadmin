@@ -486,6 +486,10 @@ func (a *AppService) AdminList(ctx context.Context, req *v1.AdminListRequest) (*
 	return a.uuc.AdminList(ctx, req)
 }
 
+func (a *AppService) AdminVipUpdate(ctx context.Context, req *v1.AdminVipUpdateRequest) (*v1.AdminVipUpdateReply, error) {
+	return a.uuc.AdminVipUpdate(ctx, req)
+}
+
 func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdrawEthRequest) (*v1.AdminWithdrawEthReply, error) {
 	var (
 		withdraws    []*biz.Withdraw

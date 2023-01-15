@@ -465,6 +465,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/admin_dhb/vip_update:
+        post:
+            tags:
+                - App
+            operationId: App_AdminVipUpdate
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AdminVipUpdateRequest_SendBody'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AdminVipUpdateReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/admin_dhb/withdraw:
         get:
             tags:
@@ -915,6 +939,18 @@ components:
                     format: int64
                 createdAt:
                     type: string
+        AdminVipUpdateReply:
+            type: object
+            properties: {}
+        AdminVipUpdateRequest_SendBody:
+            type: object
+            properties:
+                userId:
+                    type: integer
+                    format: int64
+                vip:
+                    type: integer
+                    format: int64
         AdminWithdrawEthReply:
             type: object
             properties: {}

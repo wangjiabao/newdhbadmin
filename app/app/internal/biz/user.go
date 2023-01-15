@@ -1063,6 +1063,44 @@ func (uuc *UserUseCase) AdminConfigUpdate(ctx context.Context, req *v1.AdminConf
 	return res, nil
 }
 
+func (uuc *UserUseCase) AdminVipUpdate(ctx context.Context, req *v1.AdminVipUpdateRequest) (*v1.AdminVipUpdateReply, error) {
+	var (
+		userInfo *UserInfo
+		err      error
+	)
+
+	userInfo, err = uuc.uiRepo.GetUserInfoByUserId(ctx, req.SendBody.UserId)
+	if nil == userInfo {
+		return &v1.AdminVipUpdateReply{}, nil
+	}
+
+	res := &v1.AdminVipUpdateReply{}
+
+	if 5 == req.SendBody.Vip {
+		userInfo.Vip = 5
+		userInfo.HistoryRecommend = 10
+	} else if 4 == req.SendBody.Vip {
+		userInfo.Vip = 4
+		userInfo.HistoryRecommend = 8
+	} else if 3 == req.SendBody.Vip {
+		userInfo.Vip = 3
+		userInfo.HistoryRecommend = 6
+	} else if 2 == req.SendBody.Vip {
+		userInfo.Vip = 2
+		userInfo.HistoryRecommend = 4
+	} else if 1 == req.SendBody.Vip {
+		userInfo.Vip = 1
+		userInfo.HistoryRecommend = 2
+	}
+
+	_, err = uuc.uiRepo.UpdateUserInfo(ctx, userInfo) // 推荐人信息修改
+	if nil != err {
+		return res, err
+	}
+
+	return res, nil
+}
+
 func (uuc *UserUseCase) AdminLogin(ctx context.Context, req *v1.AdminLoginRequest, ca string) (*v1.AdminLoginReply, error) {
 	var (
 		admin *Admin
