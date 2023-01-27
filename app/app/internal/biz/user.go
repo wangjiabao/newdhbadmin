@@ -1664,10 +1664,6 @@ func (uuc *UserUseCase) AdminFeeDaily(ctx context.Context, req *v1.AdminDailyFee
 		fee += userLocation.CurrentMax / 5
 	}
 
-	if 0 >= fee {
-		return &v1.AdminDailyFeeReply{}, err
-	}
-
 	// 昨日剩余全网手续费
 	reward, _ = uuc.ubRepo.GetSystemYesterdayDailyReward(ctx)
 	rewardAmount := int64(0)
