@@ -1670,12 +1670,13 @@ func (uuc *UserUseCase) AdminFeeDaily(ctx context.Context, req *v1.AdminDailyFee
 
 	// 昨日剩余全网手续费
 	reward, _ = uuc.ubRepo.GetSystemYesterdayDailyReward(ctx)
+	rewardAmount := int64(0)
 	if nil != reward {
-		fmt.Println(reward.Amount, fee)
-		fee += reward.Amount
+		rewardAmount = reward.Amount
 	}
-	systemFee := fee / 10000 * 3 * 30
-	fee = fee / 10000 * 3 * 70
+	fmt.Println(rewardAmount, fee)
+	systemFee := (fee/100*3 + rewardAmount) / 100 * 30
+	fee = (fee/100*3 + rewardAmount) / 100 * 70
 	if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
 		for k, v := range userSortRecommendRewards {
 			// 获取当前用户的占位信息，已经有运行中的跳过
