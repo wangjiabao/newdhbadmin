@@ -1673,6 +1673,9 @@ func (uuc *UserUseCase) AdminFeeDaily(ctx context.Context, req *v1.AdminDailyFee
 	fmt.Println(rewardAmount, fee)
 	systemFee := (fee/100*3 + rewardAmount) / 100 * 30
 	fee = (fee/100*3 + rewardAmount) / 100 * 70
+	if 0 >= fee {
+		return &v1.AdminDailyFeeReply{}, err
+	}
 	if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
 		for k, v := range userSortRecommendRewards {
 			// 获取当前用户的占位信息，已经有运行中的跳过
