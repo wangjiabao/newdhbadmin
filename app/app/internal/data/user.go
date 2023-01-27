@@ -514,15 +514,22 @@ func (u *UserRepo) GetAdminAuth(ctx context.Context, adminId int64) ([]*biz.Admi
 }
 
 // GetUsers .
-func (u *UserRepo) GetUsers(ctx context.Context, b *biz.Pagination, address string) ([]*biz.User, error, int64) {
+func (u *UserRepo) GetUsers(ctx context.Context, b *biz.Pagination, address string, isLocation bool, vip int64) ([]*biz.User, error, int64) {
 	var (
 		users []*User
 		count int64
 	)
 	instance := u.data.db.Table("user")
-
 	if "" != address {
 		instance = instance.Where("address=?", address)
+	}
+
+	if isLocation {
+		instance = instance.Joins("inner join location on user.id = location.user_id").Group("user.id")
+	}
+
+	if 0 < vip {
+		instance = instance.Joins("inner join user_info on user.id = user_info.user_id and user_info.vip=?", vip).Group("user.id")
 	}
 
 	instance = instance.Count(&count)

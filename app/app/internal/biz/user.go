@@ -209,7 +209,7 @@ type UserRepo interface {
 	CreateAdmin(ctx context.Context, a *Admin) (*Admin, error)
 	GetUserByUserIds(ctx context.Context, userIds ...int64) (map[int64]*User, error)
 	GetAdmins(ctx context.Context) ([]*Admin, error)
-	GetUsers(ctx context.Context, b *Pagination, address string) ([]*User, error, int64)
+	GetUsers(ctx context.Context, b *Pagination, address string, isLocation bool, vip int64) ([]*User, error, int64)
 	GetUserCount(ctx context.Context) (int64, error)
 	GetUserCountToday(ctx context.Context) (int64, error)
 	CreateAdminAuth(ctx context.Context, adminId int64, authId int64) (bool, error)
@@ -780,7 +780,7 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 	users, err, count = uuc.repo.GetUsers(ctx, &Pagination{
 		PageNum:  int(req.Page),
 		PageSize: 10,
-	}, req.Address)
+	}, req.Address, req.IsLocation, req.Vip)
 	if nil != err {
 		return res, nil
 	}
@@ -1754,6 +1754,7 @@ func (uuc *UserUseCase) AdminAll(ctx context.Context, req *v1.AdminAllRequest) (
 		userWithdrawUsdtTotal           int64
 		userRewardUsdtTotal             int64
 		systemRewardUsdtTotal           int64
+		userLocationCount               int64
 	)
 	userCount, _ = uuc.repo.GetUserCount(ctx)
 	userTodayCount, _ = uuc.repo.GetUserCountToday(ctx)
@@ -1764,10 +1765,12 @@ func (uuc *UserUseCase) AdminAll(ctx context.Context, req *v1.AdminAllRequest) (
 	userWithdrawUsdtTotal, _ = uuc.ubRepo.GetUserWithdrawUsdtTotal(ctx)
 	userRewardUsdtTotal, _ = uuc.ubRepo.GetUserRewardUsdtTotal(ctx)
 	systemRewardUsdtTotal, _ = uuc.ubRepo.GetSystemRewardUsdtTotal(ctx)
+	userLocationCount = uuc.locationRepo.GetLocationUserCount(ctx)
 
 	return &v1.AdminAllReply{
 		TodayTotalUser:        userTodayCount,
 		TotalUser:             userCount,
+		LocationCount:         userLocationCount,
 		AllBalance:            fmt.Sprintf("%.2f", float64(userBalanceUsdtTotal)/float64(10000000000)),
 		TodayLocation:         fmt.Sprintf("%.2f", float64(userBalanceRecordUsdtTotalToday)/float64(10000000000)),
 		AllLocation:           fmt.Sprintf("%.2f", float64(userBalanceRecordUsdtTotal)/float64(10000000000)),

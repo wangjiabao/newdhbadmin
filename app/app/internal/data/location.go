@@ -503,3 +503,12 @@ func (lr *LocationRepo) GetLocations(ctx context.Context, b *biz.Pagination, use
 
 	return res, nil, count
 }
+
+// GetLocationUserCount .
+func (lr *LocationRepo) GetLocationUserCount(ctx context.Context) int64 {
+	var (
+		count int64
+	)
+	lr.data.db.Table("location").Group("user_id").Count(&count)
+	return count
+}

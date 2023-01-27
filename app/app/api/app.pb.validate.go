@@ -2418,6 +2418,10 @@ func (m *AdminUserListRequest) validate(all bool) error {
 
 	// no validation rules for Address
 
+	// no validation rules for IsLocation
+
+	// no validation rules for Vip
+
 	if len(errors) > 0 {
 		return AdminUserListRequestMultiError(errors)
 	}
@@ -4059,6 +4063,8 @@ func (m *AdminAllReply) validate(all bool) error {
 	var errors []error
 
 	// no validation rules for TodayTotalUser
+
+	// no validation rules for LocationCount
 
 	// no validation rules for TotalUser
 

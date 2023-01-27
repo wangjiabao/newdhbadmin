@@ -452,6 +452,15 @@ paths:
                   in: query
                   schema:
                     type: string
+                - name: isLocation
+                  in: query
+                  schema:
+                    type: boolean
+                - name: vip
+                  in: query
+                  schema:
+                    type: integer
+                    format: int64
             responses:
                 "200":
                     description: OK
@@ -730,6 +739,9 @@ components:
             type: object
             properties:
                 todayTotalUser:
+                    type: integer
+                    format: int64
+                locationCount:
                     type: integer
                     format: int64
                 totalUser:

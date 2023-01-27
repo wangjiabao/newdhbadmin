@@ -371,6 +371,8 @@ message AdminRewardListReply {
 message AdminUserListRequest {
 	int64 page = 1;
 	string address = 2;
+	bool isLocation = 3;
+	int64 vip = 4;
 }
 
 message AdminUserListReply {
@@ -456,6 +458,7 @@ message AdminAllRequest {
 
 message AdminAllReply {
 	int64 todayTotalUser = 1;
+	int64 locationCount = 10;
 	int64 totalUser = 2;
 	string allBalance = 3;
 	string todayLocation = 4;
