@@ -641,6 +641,18 @@ func (ui *UserInfoRepo) UpdateUserInfo(ctx context.Context, u *biz.UserInfo) (*b
 	}, nil
 }
 
+// UpdateBalance .
+func (ub *UserBalanceRepo) UpdateBalance(ctx context.Context, userId int64, amount int64) (bool, error) {
+	var err error
+	if err = ub.data.DB(ctx).Table("user_balance").
+		Where("user_id=?", userId).
+		Updates(map[string]interface{}{"balance_usdt": amount}).Error; nil != err {
+		return false, errors.NotFound("user balance err", "user balance not found")
+	}
+
+	return true, nil
+}
+
 // UpdateAdminPassword .
 func (u *UserRepo) UpdateAdminPassword(ctx context.Context, account string, password string) (*biz.Admin, error) {
 	var admin Admin

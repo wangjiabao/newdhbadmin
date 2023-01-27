@@ -6292,6 +6292,239 @@ var _ interface {
 	ErrorName() string
 } = AdminVipUpdateReplyValidationError{}
 
+// Validate checks the field values on AdminBalanceUpdateRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *AdminBalanceUpdateRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AdminBalanceUpdateRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// AdminBalanceUpdateRequestMultiError, or nil if none found.
+func (m *AdminBalanceUpdateRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdminBalanceUpdateRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetSendBody()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AdminBalanceUpdateRequestValidationError{
+					field:  "SendBody",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AdminBalanceUpdateRequestValidationError{
+					field:  "SendBody",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSendBody()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AdminBalanceUpdateRequestValidationError{
+				field:  "SendBody",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return AdminBalanceUpdateRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdminBalanceUpdateRequestMultiError is an error wrapping multiple validation
+// errors returned by AdminBalanceUpdateRequest.ValidateAll() if the
+// designated constraints aren't met.
+type AdminBalanceUpdateRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdminBalanceUpdateRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdminBalanceUpdateRequestMultiError) AllErrors() []error { return m }
+
+// AdminBalanceUpdateRequestValidationError is the validation error returned by
+// AdminBalanceUpdateRequest.Validate if the designated constraints aren't met.
+type AdminBalanceUpdateRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdminBalanceUpdateRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdminBalanceUpdateRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdminBalanceUpdateRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdminBalanceUpdateRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdminBalanceUpdateRequestValidationError) ErrorName() string {
+	return "AdminBalanceUpdateRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdminBalanceUpdateRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdminBalanceUpdateRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdminBalanceUpdateRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdminBalanceUpdateRequestValidationError{}
+
+// Validate checks the field values on AdminBalanceUpdateReply with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *AdminBalanceUpdateReply) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AdminBalanceUpdateReply with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// AdminBalanceUpdateReplyMultiError, or nil if none found.
+func (m *AdminBalanceUpdateReply) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdminBalanceUpdateReply) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return AdminBalanceUpdateReplyMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdminBalanceUpdateReplyMultiError is an error wrapping multiple validation
+// errors returned by AdminBalanceUpdateReply.ValidateAll() if the designated
+// constraints aren't met.
+type AdminBalanceUpdateReplyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdminBalanceUpdateReplyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdminBalanceUpdateReplyMultiError) AllErrors() []error { return m }
+
+// AdminBalanceUpdateReplyValidationError is the validation error returned by
+// AdminBalanceUpdateReply.Validate if the designated constraints aren't met.
+type AdminBalanceUpdateReplyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdminBalanceUpdateReplyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdminBalanceUpdateReplyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdminBalanceUpdateReplyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdminBalanceUpdateReplyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdminBalanceUpdateReplyValidationError) ErrorName() string {
+	return "AdminBalanceUpdateReplyValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdminBalanceUpdateReplyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdminBalanceUpdateReply.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdminBalanceUpdateReplyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdminBalanceUpdateReplyValidationError{}
+
 // Validate checks the field values on AuthAdminCreateRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -9657,6 +9890,115 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = AdminVipUpdateRequest_SendBodyValidationError{}
+
+// Validate checks the field values on AdminBalanceUpdateRequest_SendBody with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *AdminBalanceUpdateRequest_SendBody) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AdminBalanceUpdateRequest_SendBody
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// AdminBalanceUpdateRequest_SendBodyMultiError, or nil if none found.
+func (m *AdminBalanceUpdateRequest_SendBody) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdminBalanceUpdateRequest_SendBody) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	// no validation rules for Amount
+
+	if len(errors) > 0 {
+		return AdminBalanceUpdateRequest_SendBodyMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdminBalanceUpdateRequest_SendBodyMultiError is an error wrapping multiple
+// validation errors returned by
+// AdminBalanceUpdateRequest_SendBody.ValidateAll() if the designated
+// constraints aren't met.
+type AdminBalanceUpdateRequest_SendBodyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdminBalanceUpdateRequest_SendBodyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdminBalanceUpdateRequest_SendBodyMultiError) AllErrors() []error { return m }
+
+// AdminBalanceUpdateRequest_SendBodyValidationError is the validation error
+// returned by AdminBalanceUpdateRequest_SendBody.Validate if the designated
+// constraints aren't met.
+type AdminBalanceUpdateRequest_SendBodyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdminBalanceUpdateRequest_SendBodyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdminBalanceUpdateRequest_SendBodyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdminBalanceUpdateRequest_SendBodyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdminBalanceUpdateRequest_SendBodyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdminBalanceUpdateRequest_SendBodyValidationError) ErrorName() string {
+	return "AdminBalanceUpdateRequest_SendBodyValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdminBalanceUpdateRequest_SendBodyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdminBalanceUpdateRequest_SendBody.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdminBalanceUpdateRequest_SendBodyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdminBalanceUpdateRequest_SendBodyValidationError{}
 
 // Validate checks the field values on AuthAdminCreateRequest_SendBody with the
 // rules defined in the proto definition for this message. If any rules are

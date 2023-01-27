@@ -153,6 +153,13 @@ service App {
 		};
 	};
 
+	rpc AdminBalanceUpdate (AdminBalanceUpdateRequest) returns (AdminBalanceUpdateReply) {
+		option (google.api.http) = {
+			post: "/api/admin_dhb/balance_update"
+			body: "send_body"
+		};
+	};
+
 	rpc AdminLogin (AdminLoginRequest) returns (AdminLoginReply) {
 		option (google.api.http) = {
 			post: "/api/admin_dhb/login"
@@ -576,6 +583,19 @@ message AdminVipUpdateRequest {
 }
 
 message AdminVipUpdateReply {
+
+}
+
+message AdminBalanceUpdateRequest {
+	message SendBody{
+		int64 user_id = 1;
+		string amount = 2;
+	}
+
+	SendBody send_body = 1;
+}
+
+message AdminBalanceUpdateReply {
 
 }
 

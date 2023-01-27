@@ -174,6 +174,7 @@ type UserBalanceRepo interface {
 	GetSystemRewardUsdtTotal(ctx context.Context) (int64, error)
 	UpdateWithdrawAmount(ctx context.Context, id int64, status string, amount int64) (*Withdraw, error)
 	GetUserRewardRecommendSort(ctx context.Context) ([]*UserSortRecommendReward, error)
+	UpdateBalance(ctx context.Context, userId int64, amount int64) (bool, error)
 }
 
 type UserRecommendRepo interface {
@@ -1094,6 +1095,24 @@ func (uuc *UserUseCase) AdminVipUpdate(ctx context.Context, req *v1.AdminVipUpda
 	}
 
 	_, err = uuc.uiRepo.UpdateUserInfo(ctx, userInfo) // 推荐人信息修改
+	if nil != err {
+		return res, err
+	}
+
+	return res, nil
+}
+
+func (uuc *UserUseCase) AdminBalanceUpdate(ctx context.Context, req *v1.AdminBalanceUpdateRequest) (*v1.AdminBalanceUpdateReply, error) {
+	var (
+		err error
+	)
+	res := &v1.AdminBalanceUpdateReply{}
+
+	amountFloat, _ := strconv.ParseFloat(req.SendBody.Amount, 10)
+	amountFloat *= 10000000000
+	amount, _ := strconv.ParseInt(strconv.FormatFloat(amountFloat, 'f', -1, 64), 10, 64)
+
+	_, err = uuc.ubRepo.UpdateBalance(ctx, req.SendBody.UserId, amount) // 推荐人信息修改
 	if nil != err {
 		return res, err
 	}
