@@ -1914,9 +1914,24 @@ func (ub *UserBalanceRepo) GetUserRewardRecommendSort(ctx context.Context) ([]*b
 	var total []*UserSortRecommendReward
 	res := make([]*biz.UserSortRecommendReward, 0)
 
+	now := time.Now().UTC()
+	var startDate time.Time
+	var endDate time.Time
+	if 14 <= now.Hour() {
+		startDate = now
+		endDate = now.AddDate(0, 0, 1)
+	} else {
+		startDate = now.AddDate(0, 0, -1)
+		endDate = now
+	}
+	todayStart := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 14, 0, 0, 0, time.UTC)
+	todayEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 14, 0, 0, 0, time.UTC)
+
 	if err := ub.data.db.Table("reward").
 		Where("type=?", "location").
 		Where("reason=?", "recommend").
+		Where("created_at>=?", todayStart).
+		Where("created_at<?", todayEnd).
 		Group("user_id").
 		Select("sum(amount) as total, user_id").
 		Order("total desc").
