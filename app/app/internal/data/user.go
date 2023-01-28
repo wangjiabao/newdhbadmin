@@ -1914,7 +1914,7 @@ func (ub *UserBalanceRepo) GetUserRewardRecommendSort(ctx context.Context) ([]*b
 	var total []*UserSortRecommendReward
 	res := make([]*biz.UserSortRecommendReward, 0)
 
-	now := time.Now().UTC()
+	now := time.Now().UTC().AddDate(0, 0, -1)
 	var startDate time.Time
 	var endDate time.Time
 	if 14 <= now.Hour() {
