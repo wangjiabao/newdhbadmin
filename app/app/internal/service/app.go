@@ -414,6 +414,10 @@ func (a *AppService) AdminLocationList(ctx context.Context, req *v1.AdminLocatio
 	return a.uuc.AdminLocationList(ctx, req)
 }
 
+func (a *AppService) AdminLocationAllList(ctx context.Context, req *v1.AdminLocationAllListRequest) (*v1.AdminLocationAllListReply, error) {
+	return a.uuc.AdminLocationAllList(ctx, req)
+}
+
 func (a *AppService) AdminWithdrawList(ctx context.Context, req *v1.AdminWithdrawListRequest) (*v1.AdminWithdrawListReply, error) {
 	return a.uuc.AdminWithdrawList(ctx, req)
 }
@@ -488,6 +492,14 @@ func (a *AppService) AdminList(ctx context.Context, req *v1.AdminListRequest) (*
 
 func (a *AppService) AdminVipUpdate(ctx context.Context, req *v1.AdminVipUpdateRequest) (*v1.AdminVipUpdateReply, error) {
 	return a.uuc.AdminVipUpdate(ctx, req)
+}
+
+func (a *AppService) AdminLocationInsert(ctx context.Context, req *v1.AdminLocationInsertRequest) (*v1.AdminLocationInsertReply, error) {
+	_, err := a.ruc.AdminLocationInsert(ctx, req.SendBody.UserId, req.SendBody.Amount)
+	if nil != err {
+		return &v1.AdminLocationInsertReply{}, err
+	}
+	return &v1.AdminLocationInsertReply{}, nil
 }
 
 func (a *AppService) AdminBalanceUpdate(ctx context.Context, req *v1.AdminBalanceUpdateRequest) (*v1.AdminBalanceUpdateReply, error) {

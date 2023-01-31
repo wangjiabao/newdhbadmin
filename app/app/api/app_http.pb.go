@@ -28,6 +28,8 @@ const OperationAppAdminCreateAccount = "/api.App/AdminCreateAccount"
 const OperationAppAdminDailyFee = "/api.App/AdminDailyFee"
 const OperationAppAdminFee = "/api.App/AdminFee"
 const OperationAppAdminList = "/api.App/AdminList"
+const OperationAppAdminLocationAllList = "/api.App/AdminLocationAllList"
+const OperationAppAdminLocationInsert = "/api.App/AdminLocationInsert"
 const OperationAppAdminLocationList = "/api.App/AdminLocationList"
 const OperationAppAdminLogin = "/api.App/AdminLogin"
 const OperationAppAdminMonthRecommend = "/api.App/AdminMonthRecommend"
@@ -62,6 +64,8 @@ type AppHTTPServer interface {
 	AdminDailyFee(context.Context, *AdminDailyFeeRequest) (*AdminDailyFeeReply, error)
 	AdminFee(context.Context, *AdminFeeRequest) (*AdminFeeReply, error)
 	AdminList(context.Context, *AdminListRequest) (*AdminListReply, error)
+	AdminLocationAllList(context.Context, *AdminLocationAllListRequest) (*AdminLocationAllListReply, error)
+	AdminLocationInsert(context.Context, *AdminLocationInsertRequest) (*AdminLocationInsertReply, error)
 	AdminLocationList(context.Context, *AdminLocationListRequest) (*AdminLocationListReply, error)
 	AdminLogin(context.Context, *AdminLoginRequest) (*AdminLoginReply, error)
 	AdminMonthRecommend(context.Context, *AdminMonthRecommendRequest) (*AdminMonthRecommendReply, error)
@@ -100,6 +104,7 @@ func RegisterAppHTTPServer(s *http.Server, srv AppHTTPServer) {
 	r.GET("/api/admin_dhb/reward_list", _App_AdminRewardList0_HTTP_Handler(srv))
 	r.GET("/api/admin_dhb/user_list", _App_AdminUserList0_HTTP_Handler(srv))
 	r.GET("/api/admin_dhb/location_list", _App_AdminLocationList0_HTTP_Handler(srv))
+	r.GET("/api/admin_dhb/location_all_list", _App_AdminLocationAllList0_HTTP_Handler(srv))
 	r.GET("/api/admin_dhb/withdraw_list", _App_AdminWithdrawList0_HTTP_Handler(srv))
 	r.GET("/api/admin_dhb/withdraw", _App_AdminWithdraw0_HTTP_Handler(srv))
 	r.GET("/api/admin_dhb/withdraw_eth", _App_AdminWithdrawEth0_HTTP_Handler(srv))
@@ -111,6 +116,7 @@ func RegisterAppHTTPServer(s *http.Server, srv AppHTTPServer) {
 	r.GET("/api/admin_dhb/config", _App_AdminConfig0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/config_update", _App_AdminConfigUpdate0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/vip_update", _App_AdminVipUpdate0_HTTP_Handler(srv))
+	r.POST("/api/admin_dhb/location_insert", _App_AdminLocationInsert0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/balance_update", _App_AdminBalanceUpdate0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/login", _App_AdminLogin0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/create_account", _App_AdminCreateAccount0_HTTP_Handler(srv))
@@ -335,6 +341,25 @@ func _App_AdminLocationList0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Conte
 	}
 }
 
+func _App_AdminLocationAllList0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in AdminLocationAllListRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAppAdminLocationAllList)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.AdminLocationAllList(ctx, req.(*AdminLocationAllListRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*AdminLocationAllListReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 func _App_AdminWithdrawList0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in AdminWithdrawListRequest
@@ -546,6 +571,28 @@ func _App_AdminVipUpdate0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context)
 			return err
 		}
 		reply := out.(*AdminVipUpdateReply)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _App_AdminLocationInsert0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in AdminLocationInsertRequest
+		if err := ctx.Bind(&in.SendBody); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAppAdminLocationInsert)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.AdminLocationInsert(ctx, req.(*AdminLocationInsertRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*AdminLocationInsertReply)
 		return ctx.Result(200, reply)
 	}
 }
@@ -768,6 +815,8 @@ type AppHTTPClient interface {
 	AdminDailyFee(ctx context.Context, req *AdminDailyFeeRequest, opts ...http.CallOption) (rsp *AdminDailyFeeReply, err error)
 	AdminFee(ctx context.Context, req *AdminFeeRequest, opts ...http.CallOption) (rsp *AdminFeeReply, err error)
 	AdminList(ctx context.Context, req *AdminListRequest, opts ...http.CallOption) (rsp *AdminListReply, err error)
+	AdminLocationAllList(ctx context.Context, req *AdminLocationAllListRequest, opts ...http.CallOption) (rsp *AdminLocationAllListReply, err error)
+	AdminLocationInsert(ctx context.Context, req *AdminLocationInsertRequest, opts ...http.CallOption) (rsp *AdminLocationInsertReply, err error)
 	AdminLocationList(ctx context.Context, req *AdminLocationListRequest, opts ...http.CallOption) (rsp *AdminLocationListReply, err error)
 	AdminLogin(ctx context.Context, req *AdminLoginRequest, opts ...http.CallOption) (rsp *AdminLoginReply, err error)
 	AdminMonthRecommend(ctx context.Context, req *AdminMonthRecommendRequest, opts ...http.CallOption) (rsp *AdminMonthRecommendReply, err error)
@@ -912,6 +961,32 @@ func (c *AppHTTPClientImpl) AdminList(ctx context.Context, in *AdminListRequest,
 	opts = append(opts, http.Operation(OperationAppAdminList))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
+}
+
+func (c *AppHTTPClientImpl) AdminLocationAllList(ctx context.Context, in *AdminLocationAllListRequest, opts ...http.CallOption) (*AdminLocationAllListReply, error) {
+	var out AdminLocationAllListReply
+	pattern := "/api/admin_dhb/location_all_list"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationAppAdminLocationAllList))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
+}
+
+func (c *AppHTTPClientImpl) AdminLocationInsert(ctx context.Context, in *AdminLocationInsertRequest, opts ...http.CallOption) (*AdminLocationInsertReply, error) {
+	var out AdminLocationInsertReply
+	pattern := "/api/admin_dhb/location_insert"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationAppAdminLocationInsert))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in.SendBody, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

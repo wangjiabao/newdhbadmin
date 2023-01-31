@@ -33,6 +33,7 @@ type AppClient interface {
 	AdminRewardList(ctx context.Context, in *AdminRewardListRequest, opts ...grpc.CallOption) (*AdminRewardListReply, error)
 	AdminUserList(ctx context.Context, in *AdminUserListRequest, opts ...grpc.CallOption) (*AdminUserListReply, error)
 	AdminLocationList(ctx context.Context, in *AdminLocationListRequest, opts ...grpc.CallOption) (*AdminLocationListReply, error)
+	AdminLocationAllList(ctx context.Context, in *AdminLocationAllListRequest, opts ...grpc.CallOption) (*AdminLocationAllListReply, error)
 	AdminWithdrawList(ctx context.Context, in *AdminWithdrawListRequest, opts ...grpc.CallOption) (*AdminWithdrawListReply, error)
 	AdminWithdraw(ctx context.Context, in *AdminWithdrawRequest, opts ...grpc.CallOption) (*AdminWithdrawReply, error)
 	AdminWithdrawEth(ctx context.Context, in *AdminWithdrawEthRequest, opts ...grpc.CallOption) (*AdminWithdrawEthReply, error)
@@ -44,6 +45,7 @@ type AppClient interface {
 	AdminConfig(ctx context.Context, in *AdminConfigRequest, opts ...grpc.CallOption) (*AdminConfigReply, error)
 	AdminConfigUpdate(ctx context.Context, in *AdminConfigUpdateRequest, opts ...grpc.CallOption) (*AdminConfigUpdateReply, error)
 	AdminVipUpdate(ctx context.Context, in *AdminVipUpdateRequest, opts ...grpc.CallOption) (*AdminVipUpdateReply, error)
+	AdminLocationInsert(ctx context.Context, in *AdminLocationInsertRequest, opts ...grpc.CallOption) (*AdminLocationInsertReply, error)
 	AdminBalanceUpdate(ctx context.Context, in *AdminBalanceUpdateRequest, opts ...grpc.CallOption) (*AdminBalanceUpdateReply, error)
 	AdminLogin(ctx context.Context, in *AdminLoginRequest, opts ...grpc.CallOption) (*AdminLoginReply, error)
 	AdminCreateAccount(ctx context.Context, in *AdminCreateAccountRequest, opts ...grpc.CallOption) (*AdminCreateAccountReply, error)
@@ -163,6 +165,15 @@ func (c *appClient) AdminLocationList(ctx context.Context, in *AdminLocationList
 	return out, nil
 }
 
+func (c *appClient) AdminLocationAllList(ctx context.Context, in *AdminLocationAllListRequest, opts ...grpc.CallOption) (*AdminLocationAllListReply, error) {
+	out := new(AdminLocationAllListReply)
+	err := c.cc.Invoke(ctx, "/api.App/AdminLocationAllList", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *appClient) AdminWithdrawList(ctx context.Context, in *AdminWithdrawListRequest, opts ...grpc.CallOption) (*AdminWithdrawListReply, error) {
 	out := new(AdminWithdrawListReply)
 	err := c.cc.Invoke(ctx, "/api.App/AdminWithdrawList", in, out, opts...)
@@ -256,6 +267,15 @@ func (c *appClient) AdminConfigUpdate(ctx context.Context, in *AdminConfigUpdate
 func (c *appClient) AdminVipUpdate(ctx context.Context, in *AdminVipUpdateRequest, opts ...grpc.CallOption) (*AdminVipUpdateReply, error) {
 	out := new(AdminVipUpdateReply)
 	err := c.cc.Invoke(ctx, "/api.App/AdminVipUpdate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) AdminLocationInsert(ctx context.Context, in *AdminLocationInsertRequest, opts ...grpc.CallOption) (*AdminLocationInsertReply, error) {
+	out := new(AdminLocationInsertReply)
+	err := c.cc.Invoke(ctx, "/api.App/AdminLocationInsert", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -367,6 +387,7 @@ type AppServer interface {
 	AdminRewardList(context.Context, *AdminRewardListRequest) (*AdminRewardListReply, error)
 	AdminUserList(context.Context, *AdminUserListRequest) (*AdminUserListReply, error)
 	AdminLocationList(context.Context, *AdminLocationListRequest) (*AdminLocationListReply, error)
+	AdminLocationAllList(context.Context, *AdminLocationAllListRequest) (*AdminLocationAllListReply, error)
 	AdminWithdrawList(context.Context, *AdminWithdrawListRequest) (*AdminWithdrawListReply, error)
 	AdminWithdraw(context.Context, *AdminWithdrawRequest) (*AdminWithdrawReply, error)
 	AdminWithdrawEth(context.Context, *AdminWithdrawEthRequest) (*AdminWithdrawEthReply, error)
@@ -378,6 +399,7 @@ type AppServer interface {
 	AdminConfig(context.Context, *AdminConfigRequest) (*AdminConfigReply, error)
 	AdminConfigUpdate(context.Context, *AdminConfigUpdateRequest) (*AdminConfigUpdateReply, error)
 	AdminVipUpdate(context.Context, *AdminVipUpdateRequest) (*AdminVipUpdateReply, error)
+	AdminLocationInsert(context.Context, *AdminLocationInsertRequest) (*AdminLocationInsertReply, error)
 	AdminBalanceUpdate(context.Context, *AdminBalanceUpdateRequest) (*AdminBalanceUpdateReply, error)
 	AdminLogin(context.Context, *AdminLoginRequest) (*AdminLoginReply, error)
 	AdminCreateAccount(context.Context, *AdminCreateAccountRequest) (*AdminCreateAccountReply, error)
@@ -428,6 +450,9 @@ func (UnimplementedAppServer) AdminUserList(context.Context, *AdminUserListReque
 func (UnimplementedAppServer) AdminLocationList(context.Context, *AdminLocationListRequest) (*AdminLocationListReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminLocationList not implemented")
 }
+func (UnimplementedAppServer) AdminLocationAllList(context.Context, *AdminLocationAllListRequest) (*AdminLocationAllListReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminLocationAllList not implemented")
+}
 func (UnimplementedAppServer) AdminWithdrawList(context.Context, *AdminWithdrawListRequest) (*AdminWithdrawListReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminWithdrawList not implemented")
 }
@@ -460,6 +485,9 @@ func (UnimplementedAppServer) AdminConfigUpdate(context.Context, *AdminConfigUpd
 }
 func (UnimplementedAppServer) AdminVipUpdate(context.Context, *AdminVipUpdateRequest) (*AdminVipUpdateReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminVipUpdate not implemented")
+}
+func (UnimplementedAppServer) AdminLocationInsert(context.Context, *AdminLocationInsertRequest) (*AdminLocationInsertReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminLocationInsert not implemented")
 }
 func (UnimplementedAppServer) AdminBalanceUpdate(context.Context, *AdminBalanceUpdateRequest) (*AdminBalanceUpdateReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminBalanceUpdate not implemented")
@@ -702,6 +730,24 @@ func _App_AdminLocationList_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_AdminLocationAllList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminLocationAllListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminLocationAllList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.App/AdminLocationAllList",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminLocationAllList(ctx, req.(*AdminLocationAllListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _App_AdminWithdrawList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AdminWithdrawListRequest)
 	if err := dec(in); err != nil {
@@ -896,6 +942,24 @@ func _App_AdminVipUpdate_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AppServer).AdminVipUpdate(ctx, req.(*AdminVipUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_AdminLocationInsert_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminLocationInsertRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminLocationInsert(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.App/AdminLocationInsert",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminLocationInsert(ctx, req.(*AdminLocationInsertRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1132,6 +1196,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _App_AdminLocationList_Handler,
 		},
 		{
+			MethodName: "AdminLocationAllList",
+			Handler:    _App_AdminLocationAllList_Handler,
+		},
+		{
 			MethodName: "AdminWithdrawList",
 			Handler:    _App_AdminWithdrawList_Handler,
 		},
@@ -1174,6 +1242,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AdminVipUpdate",
 			Handler:    _App_AdminVipUpdate_Handler,
+		},
+		{
+			MethodName: "AdminLocationInsert",
+			Handler:    _App_AdminLocationInsert_Handler,
 		},
 		{
 			MethodName: "AdminBalanceUpdate",

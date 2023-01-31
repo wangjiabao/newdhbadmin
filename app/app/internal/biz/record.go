@@ -3,6 +3,7 @@ package biz
 import (
 	"context"
 	"fmt"
+	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"strconv"
 	"strings"
@@ -66,6 +67,7 @@ type LocationRepo interface {
 	GetRewardLocationByIds(ctx context.Context, ids ...int64) (map[int64]*Location, error)
 	UpdateLocation(ctx context.Context, id int64, status string, current int64, stopDate time.Time) error
 	GetLocations(ctx context.Context, b *Pagination, userId int64) ([]*Location, error, int64)
+	GetLocationsAll(ctx context.Context, b *Pagination, userId int64) ([]*Location, error, int64)
 	UpdateLocationRowAndCol(ctx context.Context, id int64) error
 	GetLocationsStopNotUpdate(ctx context.Context) ([]*Location, error)
 	LockGlobalLocation(ctx context.Context) (bool, error)
@@ -706,6 +708,157 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 				}); nil != err {
 					continue
 				}
+			}
+		}
+	}
+
+	return true, nil
+}
+
+func (ruc *RecordUseCase) AdminLocationInsert(ctx context.Context, userId int64, amount int64) (bool, error) {
+
+	var (
+		lastLocation         *Location
+		myLocations          []*Location
+		locationCurrentLevel int64
+		locationCurrent      int64
+		locationCurrentMax   int64
+		locationRow          int64
+		locationCol          int64
+		currentLocation      *Location
+		myLastStopLocation   *Location
+		err                  error
+		configs              []*Config
+		stopLocations        []*Location
+		timeAgain            int64
+	)
+	// 配置
+	configs, _ = ruc.configRepo.GetConfigByKeys(ctx, "time_again")
+	if nil != configs {
+		for _, vConfig := range configs {
+			if "time_again" == vConfig.KeyName {
+				timeAgain, _ = strconv.ParseInt(vConfig.Value, 10, 64)
+			}
+		}
+	}
+
+	// 调整位置紧缩
+	stopLocations, err = ruc.locationRepo.GetLocationsStopNotUpdate(ctx)
+	if nil != stopLocations {
+		// 调整位置紧缩
+		for _, vStopLocations := range stopLocations {
+
+			if err = ruc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+				err = ruc.locationRepo.UpdateLocationRowAndCol(ctx, vStopLocations.ID)
+				if nil != err {
+					return err
+				}
+				return nil
+			}); nil != err {
+				continue
+			}
+		}
+	}
+
+	// 获取当前用户的占位信息，已经有运行中的跳过
+	myLocations, err = ruc.locationRepo.GetLocationsByUserId(ctx, userId)
+	if nil == myLocations { // 查询异常跳过本次循环
+		return false, errors.New(500, "ERROR", "查询错误，重试")
+	}
+	if 0 < len(myLocations) { // 也代表复投
+		tmpStatusRunning := false
+		for _, vMyLocations := range myLocations {
+			if "running" == vMyLocations.Status {
+				tmpStatusRunning = true
+				break
+			}
+		}
+
+		if tmpStatusRunning { // 有运行中直接跳过本次循环
+			return false, errors.New(500, "ERROR", "已存在运行中位置信息")
+		}
+	}
+
+	// 获取最后一行数据
+	lastLocation, err = ruc.locationRepo.GetLocationLast(ctx)
+	if nil == lastLocation {
+		locationRow = 1
+		locationCol = 1
+		fmt.Println(25, locationRow, locationRow)
+	} else {
+		if 3 > lastLocation.Col {
+			locationCol = lastLocation.Col + 1
+			locationRow = lastLocation.Row
+			fmt.Println(33, locationCol, locationRow)
+		} else {
+			locationCol = 1
+			locationRow = lastLocation.Row + 1
+			fmt.Println(22, locationRow, locationRow)
+		}
+	}
+
+	// todo
+	if 50 == amount {
+		locationCurrentLevel = 1
+		locationCurrentMax = 2500000000000
+	} else if 100 == amount {
+		locationCurrentLevel = 2
+		locationCurrentMax = 5000000000000
+	} else if 300 == amount {
+		locationCurrentLevel = 3
+		locationCurrentMax = 15000000000000
+	} else {
+		return false, errors.New(500, "ERROR", "输入金额错误，重试")
+	}
+
+	// 冻结
+	myLastStopLocation, err = ruc.locationRepo.GetMyStopLocationLast(ctx, userId)
+	now := time.Now().UTC().Add(8 * time.Hour)
+	if nil != myLastStopLocation && now.Before(myLastStopLocation.StopDate.Add(time.Duration(timeAgain)*time.Minute)) {
+		locationCurrent = myLastStopLocation.Current - myLastStopLocation.CurrentMax // 补上
+	}
+
+	if err = ruc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+		currentLocation, err = ruc.locationRepo.CreateLocation(ctx, &Location{ // 占位
+			UserId:       userId,
+			Status:       "running",
+			CurrentLevel: locationCurrentLevel,
+			Current:      locationCurrent,
+			CurrentMax:   locationCurrentMax,
+			Row:          locationRow,
+			Col:          locationCol,
+		})
+		if nil != err {
+			return err
+		}
+
+		if 0 < locationCurrent && nil != myLastStopLocation {
+			_, err = ruc.userBalanceRepo.DepositLast(ctx, userId, locationCurrent, myLastStopLocation.ID) // 充值
+			if nil != err {
+				return err
+			}
+		}
+
+		return nil
+	}); nil != err {
+		return false, errors.New(500, "ERROR", "错误，重试")
+
+	}
+
+	// 调整位置紧缩
+	stopLocations, err = ruc.locationRepo.GetLocationsStopNotUpdate(ctx)
+	if nil != stopLocations {
+		// 调整位置紧缩
+		for _, vStopLocations := range stopLocations {
+
+			if err = ruc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+				err = ruc.locationRepo.UpdateLocationRowAndCol(ctx, vStopLocations.ID)
+				if nil != err {
+					return err
+				}
+				return nil
+			}); nil != err {
+				continue
 			}
 		}
 	}

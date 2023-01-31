@@ -2884,6 +2884,251 @@ var _ interface {
 	ErrorName() string
 } = AdminLocationListReplyValidationError{}
 
+// Validate checks the field values on AdminLocationAllListRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *AdminLocationAllListRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AdminLocationAllListRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// AdminLocationAllListRequestMultiError, or nil if none found.
+func (m *AdminLocationAllListRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdminLocationAllListRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Page
+
+	// no validation rules for Address
+
+	if len(errors) > 0 {
+		return AdminLocationAllListRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdminLocationAllListRequestMultiError is an error wrapping multiple
+// validation errors returned by AdminLocationAllListRequest.ValidateAll() if
+// the designated constraints aren't met.
+type AdminLocationAllListRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdminLocationAllListRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdminLocationAllListRequestMultiError) AllErrors() []error { return m }
+
+// AdminLocationAllListRequestValidationError is the validation error returned
+// by AdminLocationAllListRequest.Validate if the designated constraints
+// aren't met.
+type AdminLocationAllListRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdminLocationAllListRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdminLocationAllListRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdminLocationAllListRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdminLocationAllListRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdminLocationAllListRequestValidationError) ErrorName() string {
+	return "AdminLocationAllListRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdminLocationAllListRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdminLocationAllListRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdminLocationAllListRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdminLocationAllListRequestValidationError{}
+
+// Validate checks the field values on AdminLocationAllListReply with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *AdminLocationAllListReply) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AdminLocationAllListReply with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// AdminLocationAllListReplyMultiError, or nil if none found.
+func (m *AdminLocationAllListReply) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdminLocationAllListReply) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetLocations() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, AdminLocationAllListReplyValidationError{
+						field:  fmt.Sprintf("Locations[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, AdminLocationAllListReplyValidationError{
+						field:  fmt.Sprintf("Locations[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return AdminLocationAllListReplyValidationError{
+					field:  fmt.Sprintf("Locations[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Count
+
+	if len(errors) > 0 {
+		return AdminLocationAllListReplyMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdminLocationAllListReplyMultiError is an error wrapping multiple validation
+// errors returned by AdminLocationAllListReply.ValidateAll() if the
+// designated constraints aren't met.
+type AdminLocationAllListReplyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdminLocationAllListReplyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdminLocationAllListReplyMultiError) AllErrors() []error { return m }
+
+// AdminLocationAllListReplyValidationError is the validation error returned by
+// AdminLocationAllListReply.Validate if the designated constraints aren't met.
+type AdminLocationAllListReplyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdminLocationAllListReplyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdminLocationAllListReplyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdminLocationAllListReplyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdminLocationAllListReplyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdminLocationAllListReplyValidationError) ErrorName() string {
+	return "AdminLocationAllListReplyValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdminLocationAllListReplyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdminLocationAllListReply.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdminLocationAllListReplyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdminLocationAllListReplyValidationError{}
+
 // Validate checks the field values on AdminWithdrawListRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -6298,6 +6543,239 @@ var _ interface {
 	ErrorName() string
 } = AdminVipUpdateReplyValidationError{}
 
+// Validate checks the field values on AdminLocationInsertRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *AdminLocationInsertRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AdminLocationInsertRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// AdminLocationInsertRequestMultiError, or nil if none found.
+func (m *AdminLocationInsertRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdminLocationInsertRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetSendBody()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, AdminLocationInsertRequestValidationError{
+					field:  "SendBody",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, AdminLocationInsertRequestValidationError{
+					field:  "SendBody",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSendBody()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return AdminLocationInsertRequestValidationError{
+				field:  "SendBody",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return AdminLocationInsertRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdminLocationInsertRequestMultiError is an error wrapping multiple
+// validation errors returned by AdminLocationInsertRequest.ValidateAll() if
+// the designated constraints aren't met.
+type AdminLocationInsertRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdminLocationInsertRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdminLocationInsertRequestMultiError) AllErrors() []error { return m }
+
+// AdminLocationInsertRequestValidationError is the validation error returned
+// by AdminLocationInsertRequest.Validate if the designated constraints aren't met.
+type AdminLocationInsertRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdminLocationInsertRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdminLocationInsertRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdminLocationInsertRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdminLocationInsertRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdminLocationInsertRequestValidationError) ErrorName() string {
+	return "AdminLocationInsertRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdminLocationInsertRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdminLocationInsertRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdminLocationInsertRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdminLocationInsertRequestValidationError{}
+
+// Validate checks the field values on AdminLocationInsertReply with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *AdminLocationInsertReply) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AdminLocationInsertReply with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// AdminLocationInsertReplyMultiError, or nil if none found.
+func (m *AdminLocationInsertReply) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdminLocationInsertReply) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return AdminLocationInsertReplyMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdminLocationInsertReplyMultiError is an error wrapping multiple validation
+// errors returned by AdminLocationInsertReply.ValidateAll() if the designated
+// constraints aren't met.
+type AdminLocationInsertReplyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdminLocationInsertReplyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdminLocationInsertReplyMultiError) AllErrors() []error { return m }
+
+// AdminLocationInsertReplyValidationError is the validation error returned by
+// AdminLocationInsertReply.Validate if the designated constraints aren't met.
+type AdminLocationInsertReplyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdminLocationInsertReplyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdminLocationInsertReplyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdminLocationInsertReplyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdminLocationInsertReplyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdminLocationInsertReplyValidationError) ErrorName() string {
+	return "AdminLocationInsertReplyValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdminLocationInsertReplyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdminLocationInsertReply.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdminLocationInsertReplyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdminLocationInsertReplyValidationError{}
+
 // Validate checks the field values on AdminBalanceUpdateRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -8804,6 +9282,128 @@ var _ interface {
 	ErrorName() string
 } = AdminLocationListReply_LocationListValidationError{}
 
+// Validate checks the field values on AdminLocationAllListReply_LocationList
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the first error encountered is returned, or nil if
+// there are no violations.
+func (m *AdminLocationAllListReply_LocationList) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on
+// AdminLocationAllListReply_LocationList with the rules defined in the proto
+// definition for this message. If any rules are violated, the result is a
+// list of violation errors wrapped in
+// AdminLocationAllListReply_LocationListMultiError, or nil if none found.
+func (m *AdminLocationAllListReply_LocationList) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdminLocationAllListReply_LocationList) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for CreatedAt
+
+	// no validation rules for Address
+
+	// no validation rules for Row
+
+	// no validation rules for Col
+
+	// no validation rules for Status
+
+	// no validation rules for CurrentLevel
+
+	// no validation rules for Current
+
+	// no validation rules for CurrentMax
+
+	if len(errors) > 0 {
+		return AdminLocationAllListReply_LocationListMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdminLocationAllListReply_LocationListMultiError is an error wrapping
+// multiple validation errors returned by
+// AdminLocationAllListReply_LocationList.ValidateAll() if the designated
+// constraints aren't met.
+type AdminLocationAllListReply_LocationListMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdminLocationAllListReply_LocationListMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdminLocationAllListReply_LocationListMultiError) AllErrors() []error { return m }
+
+// AdminLocationAllListReply_LocationListValidationError is the validation
+// error returned by AdminLocationAllListReply_LocationList.Validate if the
+// designated constraints aren't met.
+type AdminLocationAllListReply_LocationListValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdminLocationAllListReply_LocationListValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdminLocationAllListReply_LocationListValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdminLocationAllListReply_LocationListValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdminLocationAllListReply_LocationListValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdminLocationAllListReply_LocationListValidationError) ErrorName() string {
+	return "AdminLocationAllListReply_LocationListValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdminLocationAllListReply_LocationListValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdminLocationAllListReply_LocationList.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdminLocationAllListReply_LocationListValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdminLocationAllListReply_LocationListValidationError{}
+
 // Validate checks the field values on AdminWithdrawListReply_List with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
@@ -9896,6 +10496,115 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = AdminVipUpdateRequest_SendBodyValidationError{}
+
+// Validate checks the field values on AdminLocationInsertRequest_SendBody with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *AdminLocationInsertRequest_SendBody) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AdminLocationInsertRequest_SendBody
+// with the rules defined in the proto definition for this message. If any
+// rules are violated, the result is a list of violation errors wrapped in
+// AdminLocationInsertRequest_SendBodyMultiError, or nil if none found.
+func (m *AdminLocationInsertRequest_SendBody) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdminLocationInsertRequest_SendBody) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for UserId
+
+	// no validation rules for Amount
+
+	if len(errors) > 0 {
+		return AdminLocationInsertRequest_SendBodyMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdminLocationInsertRequest_SendBodyMultiError is an error wrapping multiple
+// validation errors returned by
+// AdminLocationInsertRequest_SendBody.ValidateAll() if the designated
+// constraints aren't met.
+type AdminLocationInsertRequest_SendBodyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdminLocationInsertRequest_SendBodyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdminLocationInsertRequest_SendBodyMultiError) AllErrors() []error { return m }
+
+// AdminLocationInsertRequest_SendBodyValidationError is the validation error
+// returned by AdminLocationInsertRequest_SendBody.Validate if the designated
+// constraints aren't met.
+type AdminLocationInsertRequest_SendBodyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdminLocationInsertRequest_SendBodyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdminLocationInsertRequest_SendBodyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdminLocationInsertRequest_SendBodyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdminLocationInsertRequest_SendBodyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdminLocationInsertRequest_SendBodyValidationError) ErrorName() string {
+	return "AdminLocationInsertRequest_SendBodyValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdminLocationInsertRequest_SendBodyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdminLocationInsertRequest_SendBody.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdminLocationInsertRequest_SendBodyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdminLocationInsertRequest_SendBodyValidationError{}
 
 // Validate checks the field values on AdminBalanceUpdateRequest_SendBody with
 // the rules defined in the proto definition for this message. If any rules

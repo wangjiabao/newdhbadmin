@@ -85,6 +85,12 @@ service App {
 		};
 	};
 
+	rpc AdminLocationAllList (AdminLocationAllListRequest) returns (AdminLocationAllListReply) {
+		option (google.api.http) = {
+			get: "/api/admin_dhb/location_all_list"
+		};
+	};
+
 	rpc AdminWithdrawList (AdminWithdrawListRequest) returns (AdminWithdrawListReply) {
 		option (google.api.http) = {
 			get: "/api/admin_dhb/withdraw_list"
@@ -149,6 +155,13 @@ service App {
 	rpc AdminVipUpdate (AdminVipUpdateRequest) returns (AdminVipUpdateReply) {
 		option (google.api.http) = {
 			post: "/api/admin_dhb/vip_update"
+			body: "send_body"
+		};
+	};
+
+	rpc AdminLocationInsert (AdminLocationInsertRequest) returns (AdminLocationInsertReply) {
+		option (google.api.http) = {
+			post: "/api/admin_dhb/location_insert"
 			body: "send_body"
 		};
 	};
@@ -410,6 +423,26 @@ message AdminLocationListReply {
 	int64 count = 2;
 }
 
+message AdminLocationAllListRequest {
+	int64 page = 1;
+	string address = 2;
+}
+
+message AdminLocationAllListReply {
+	repeated LocationList locations = 1;
+	message  LocationList {
+		string created_at = 1;
+		string address = 2;
+		int64 row = 3;
+		int64 col = 4;
+		string status = 5;
+		int64 currentLevel = 6;
+		string current = 7;
+		string currentMax = 8;
+	}
+	int64 count = 2;
+}
+
 message AdminWithdrawListRequest {
 	int64 page = 1;
 	string address = 2;
@@ -586,6 +619,19 @@ message AdminVipUpdateRequest {
 }
 
 message AdminVipUpdateReply {
+
+}
+
+message AdminLocationInsertRequest {
+	message SendBody{
+		int64 user_id = 1;
+		int64 amount = 2;
+	}
+
+	SendBody send_body = 1;
+}
+
+message AdminLocationInsertReply {
 
 }
 

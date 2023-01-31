@@ -287,6 +287,58 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/admin_dhb/location_all_list:
+        get:
+            tags:
+                - App
+            operationId: App_AdminLocationAllList
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int64
+                - name: address
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AdminLocationAllListReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /api/admin_dhb/location_insert:
+        post:
+            tags:
+                - App
+            operationId: App_AdminLocationInsert
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AdminLocationInsertRequest_SendBody'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AdminLocationInsertReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/admin_dhb/location_list:
         get:
             tags:
@@ -844,6 +896,50 @@ components:
                     format: int64
                 account:
                     type: string
+        AdminLocationAllListReply:
+            type: object
+            properties:
+                locations:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/AdminLocationAllListReply_LocationList'
+                count:
+                    type: integer
+                    format: int64
+        AdminLocationAllListReply_LocationList:
+            type: object
+            properties:
+                createdAt:
+                    type: string
+                address:
+                    type: string
+                row:
+                    type: integer
+                    format: int64
+                col:
+                    type: integer
+                    format: int64
+                status:
+                    type: string
+                currentLevel:
+                    type: integer
+                    format: int64
+                current:
+                    type: string
+                currentMax:
+                    type: string
+        AdminLocationInsertReply:
+            type: object
+            properties: {}
+        AdminLocationInsertRequest_SendBody:
+            type: object
+            properties:
+                userId:
+                    type: integer
+                    format: int64
+                amount:
+                    type: integer
+                    format: int64
         AdminLocationListReply:
             type: object
             properties:

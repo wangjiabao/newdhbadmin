@@ -904,6 +904,74 @@ func (uuc *UserUseCase) AdminLocationList(ctx context.Context, req *v1.AdminLoca
 
 }
 
+func (uuc *UserUseCase) AdminLocationAllList(ctx context.Context, req *v1.AdminLocationAllListRequest) (*v1.AdminLocationAllListReply, error) {
+	var (
+		locations  []*Location
+		userSearch *User
+		userId     int64
+		userIds    []int64
+		userIdsMap map[int64]int64
+		users      map[int64]*User
+		count      int64
+		err        error
+	)
+
+	res := &v1.AdminLocationAllListReply{
+		Locations: make([]*v1.AdminLocationAllListReply_LocationList, 0),
+	}
+
+	// 地址查询
+	if "" != req.Address {
+		userSearch, err = uuc.repo.GetUserByAddress(ctx, req.Address)
+		if nil != err {
+			return res, nil
+		}
+		userId = userSearch.ID
+	}
+
+	locations, err, count = uuc.locationRepo.GetLocationsAll(ctx, &Pagination{
+		PageNum:  int(req.Page),
+		PageSize: 10,
+	}, userId)
+	if nil != err {
+		return res, nil
+	}
+	res.Count = count
+
+	userIdsMap = make(map[int64]int64, 0)
+	for _, vLocations := range locations {
+		userIdsMap[vLocations.UserId] = vLocations.UserId
+	}
+	for _, v := range userIdsMap {
+		userIds = append(userIds, v)
+	}
+
+	users, err = uuc.repo.GetUserByUserIds(ctx, userIds...)
+	if nil != err {
+		return res, nil
+	}
+
+	for _, v := range locations {
+		if _, ok := users[v.UserId]; !ok {
+			continue
+		}
+
+		res.Locations = append(res.Locations, &v1.AdminLocationAllListReply_LocationList{
+			CreatedAt:    v.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
+			Address:      users[v.UserId].Address,
+			Row:          v.Row,
+			Col:          v.Col,
+			Status:       v.Status,
+			CurrentLevel: v.CurrentLevel,
+			Current:      fmt.Sprintf("%.2f", float64(v.Current)/float64(10000000000)),
+			CurrentMax:   fmt.Sprintf("%.2f", float64(v.CurrentMax)/float64(10000000000)),
+		})
+	}
+
+	return res, nil
+
+}
+
 func (uuc *UserUseCase) AdminRecommendList(ctx context.Context, req *v1.AdminUserRecommendRequest) (*v1.AdminUserRecommendReply, error) {
 	var (
 		userRecommends []*UserRecommend
