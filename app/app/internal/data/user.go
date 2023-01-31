@@ -2093,13 +2093,13 @@ func (ub UserBalanceRepo) GetUserBalanceRecordUsdtTotalToday(ctx context.Context
 		startDate = now.AddDate(0, 0, -1)
 		endDate = now
 	}
-	todayStart := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 16, 0, 0, 0, time.UTC)
-	todayEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 15, 59, 59, 0, time.UTC)
+	todayStart := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 14, 0, 0, 0, time.UTC)
+	todayEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 14, 0, 0, 0, time.UTC)
 
 	if err := ub.data.db.Table("user_balance_record").
 		Where("type=?", "deposit").
 		Where("coin_type=?", "usdt").
-		Where("created_at>=?", todayStart).Where("created_at<=?", todayEnd).
+		Where("created_at>=?", todayStart).Where("created_at<?", todayEnd).
 		Select("sum(amount) as total").Take(&total).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return total.Total, errors.NotFound("USER_BALANCE_RECORD_NOT_FOUND", "user balance not found")
@@ -2124,12 +2124,13 @@ func (ub UserBalanceRepo) GetUserWithdrawUsdtTotalToday(ctx context.Context) (in
 		startDate = now.AddDate(0, 0, -1)
 		endDate = now
 	}
-	todayStart := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 16, 0, 0, 0, time.UTC)
-	todayEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 15, 59, 59, 0, time.UTC)
+	todayStart := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 14, 0, 0, 0, time.UTC)
+	todayEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 14, 0, 0, 0, time.UTC)
+
 	if err := ub.data.db.Table("user_balance_record").
 		Where("type=?", "withdraw").
 		Where("coin_type=?", "usdt").
-		Where("created_at>=?", todayStart).Where("created_at<=?", todayEnd).
+		Where("created_at>=?", todayStart).Where("created_at<?", todayEnd).
 		Select("sum(amount) as total").Take(&total).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return total.Total, errors.NotFound("USER_BALANCE_RECORD_NOT_FOUND", "user balance not found")
