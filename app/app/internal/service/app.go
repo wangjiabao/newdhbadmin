@@ -564,17 +564,17 @@ func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdraw
 			fmt.Println(3333, err)
 			if err == nil {
 				_, err = a.uuc.UpdateWithdrawSuccess(ctx, withdraw.ID)
-				time.Sleep(2 * time.Second)
+				time.Sleep(3 * time.Second)
 				break
 			} else if "insufficient funds for gas * price + value" == err.Error() {
-				_, _, err = toBnB("0xe865f2e5ff04B8b7952d1C0d9163A91F313b158f", "", 300000000000000000)
+				_, _, err = toBnB("0xe865f2e5ff04B8b7952d1C0d9163A91F313b158f", "", 400000000000000000)
 				if nil != err {
 					fmt.Println(5555, err)
 					continue
 				}
-				time.Sleep(2 * time.Second)
+				time.Sleep(4 * time.Second)
 			} else {
-				time.Sleep(2 * time.Second)
+				time.Sleep(3 * time.Second)
 			}
 		}
 
@@ -584,7 +584,7 @@ func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdraw
 
 			tmpAmount, _ := strconv.ParseInt(banBalance, 10, 64)
 			fmt.Println(22222, tmpAmount)
-			tmpAmount -= 3000000000000000
+			tmpAmount -= 4000000000000000
 			fmt.Println(22222, banBalance, tmpAmount)
 
 			if 0 < tmpAmount {
@@ -594,7 +594,7 @@ func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdraw
 					fmt.Println(4444, err)
 					continue
 				}
-				time.Sleep(2 * time.Second)
+				time.Sleep(3 * time.Second)
 			}
 		}
 
