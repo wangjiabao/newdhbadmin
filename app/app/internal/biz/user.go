@@ -163,6 +163,7 @@ type UserBalanceRepo interface {
 	GetWithdrawByUserId(ctx context.Context, userId int64) ([]*Withdraw, error)
 	GetWithdraws(ctx context.Context, b *Pagination, userId int64) ([]*Withdraw, error, int64)
 	GetWithdrawPassOrRewarded(ctx context.Context) ([]*Withdraw, error)
+	GetWithdrawPassOrRewardedFirst(ctx context.Context) (*Withdraw, error)
 	UpdateWithdraw(ctx context.Context, id int64, status string) (*Withdraw, error)
 	GetWithdrawById(ctx context.Context, id int64) (*Withdraw, error)
 	GetWithdrawNotDeal(ctx context.Context) ([]*Withdraw, error)
@@ -1544,6 +1545,10 @@ func (uuc *UserUseCase) AuthAdminDelete(ctx context.Context, req *v1.AuthAdminDe
 
 func (uuc *UserUseCase) GetWithdrawPassOrRewardedList(ctx context.Context) ([]*Withdraw, error) {
 	return uuc.ubRepo.GetWithdrawPassOrRewarded(ctx)
+}
+
+func (uuc *UserUseCase) GetWithdrawPassOrRewardedFirst(ctx context.Context) (*Withdraw, error) {
+	return uuc.ubRepo.GetWithdrawPassOrRewardedFirst(ctx)
 }
 
 func (uuc *UserUseCase) UpdateWithdrawDoing(ctx context.Context, id int64) (*Withdraw, error) {

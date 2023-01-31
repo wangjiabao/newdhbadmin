@@ -1260,6 +1260,29 @@ func (ub *UserBalanceRepo) GetWithdrawPassOrRewarded(ctx context.Context) ([]*bi
 	return res, nil
 }
 
+// GetWithdrawPassOrRewardedFirst .
+func (ub *UserBalanceRepo) GetWithdrawPassOrRewardedFirst(ctx context.Context) (*biz.Withdraw, error) {
+	var withdraw *Withdraw
+	if err := ub.data.db.Table("withdraw").Where("status=? or status=?", "pass", "rewarded").First(&withdraw).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.NotFound("WITHDRAW_NOT_FOUND", "withdraw not found")
+		}
+
+		return nil, errors.New(500, "WITHDRAW ERROR", err.Error())
+	}
+
+	return &biz.Withdraw{
+		ID:              withdraw.ID,
+		UserId:          withdraw.UserId,
+		Amount:          withdraw.Amount,
+		RelAmount:       withdraw.RelAmount,
+		BalanceRecordId: withdraw.BalanceRecordId,
+		Status:          withdraw.Status,
+		Type:            withdraw.Type,
+		CreatedAt:       withdraw.CreatedAt,
+	}, nil
+}
+
 // RecommendReward .
 func (ub *UserBalanceRepo) RecommendReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error) {
 	var err error

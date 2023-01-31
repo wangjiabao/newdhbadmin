@@ -508,59 +508,62 @@ func (a *AppService) AdminBalanceUpdate(ctx context.Context, req *v1.AdminBalanc
 
 func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdrawEthRequest) (*v1.AdminWithdrawEthReply, error) {
 	var (
-		withdraws    []*biz.Withdraw
+		withdraw     *biz.Withdraw
 		userIds      []int64
 		userIdsMap   map[int64]int64
 		users        map[int64]*biz.User
 		tokenAddress string
 		err          error
 	)
-	withdraws, err = a.uuc.GetWithdrawPassOrRewardedList(ctx)
-	if nil != err {
-		return nil, err
-	}
 
-	userIdsMap = make(map[int64]int64, 0)
-	for _, vWithdraws := range withdraws {
-		userIdsMap[vWithdraws.UserId] = vWithdraws.UserId
-	}
-	for _, v := range userIdsMap {
-		userIds = append(userIds, v)
-	}
+	for {
 
-	users, err = a.uuc.GetUserByUserIds(ctx, userIds...)
-	if nil != err {
-		return nil, err
-	}
+		withdraw, err = a.uuc.GetWithdrawPassOrRewardedFirst(ctx)
+		if nil == withdraw {
+			break
+		}
 
-	for _, v := range withdraws {
-		if _, ok := users[v.UserId]; !ok {
+		userIdsMap = make(map[int64]int64, 0)
+		//for _, vWithdraws := range withdraws {
+		//	userIdsMap[vWithdraws.UserId] = vWithdraws.UserId
+		//}
+		userIdsMap[withdraw.UserId] = withdraw.UserId
+		for _, v := range userIdsMap {
+			userIds = append(userIds, v)
+		}
+
+		users, err = a.uuc.GetUserByUserIds(ctx, userIds...)
+		if nil != err {
+			return nil, err
+		}
+
+		if _, ok := users[withdraw.UserId]; !ok {
 			continue
 		}
 
-		if "dhb" == v.Type {
+		if "dhb" == withdraw.Type {
 			continue
 			//tokenAddress = "0x96BD81715c69eE013405B4005Ba97eA1f420fd87"
-		} else if "usdt" == v.Type {
+		} else if "usdt" == withdraw.Type {
 			//tokenAddress = "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"
 			tokenAddress = "0x55d398326f99059fF775485246999027B3197955"
 		} else {
 			continue
 		}
 
-		_, err = a.uuc.UpdateWithdrawDoing(ctx, v.ID)
+		_, err = a.uuc.UpdateWithdrawDoing(ctx, withdraw.ID)
 		if nil != err {
 			continue
 		}
 
-		withDrawAmount := strconv.FormatInt(v.RelAmount, 10) + "00000000" // 补八个0.系统基础1是10个0
+		withDrawAmount := strconv.FormatInt(withdraw.RelAmount, 10) + "00000000" // 补八个0.系统基础1是10个0
 
 		for i := 0; i < 3; i++ {
 			//fmt.Println(11111, user.ToAddress, v.Amount, balanceInt)
-			_, _, err = toToken("", users[v.UserId].Address, withDrawAmount, tokenAddress)
+			_, _, err = toToken("", users[withdraw.UserId].Address, withDrawAmount, tokenAddress)
 			fmt.Println(3333, err)
 			if err == nil {
-				_, err = a.uuc.UpdateWithdrawSuccess(ctx, v.ID)
+				_, err = a.uuc.UpdateWithdrawSuccess(ctx, withdraw.ID)
 				time.Sleep(6 * time.Second)
 				break
 			} else if "insufficient funds for gas * price + value" == err.Error() {
@@ -594,6 +597,7 @@ func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdraw
 				time.Sleep(6 * time.Second)
 			}
 		}
+
 	}
 
 	return &v1.AdminWithdrawEthReply{}, nil
