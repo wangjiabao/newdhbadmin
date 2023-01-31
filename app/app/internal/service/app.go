@@ -572,7 +572,7 @@ func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdraw
 					fmt.Println(5555, err)
 					continue
 				}
-				time.Sleep(4 * time.Second)
+				time.Sleep(7 * time.Second)
 			} else {
 				time.Sleep(3 * time.Second)
 			}
