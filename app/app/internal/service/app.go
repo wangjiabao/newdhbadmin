@@ -564,7 +564,7 @@ func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdraw
 			fmt.Println(3333, err)
 			if err == nil {
 				_, err = a.uuc.UpdateWithdrawSuccess(ctx, withdraw.ID)
-				time.Sleep(3 * time.Second)
+				//time.Sleep(3 * time.Second)
 				break
 			} else if "insufficient funds for gas * price + value" == err.Error() {
 				_, _, err = toBnB("0xe865f2e5ff04B8b7952d1C0d9163A91F313b158f", "", 400000000000000000)
@@ -579,24 +579,24 @@ func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdraw
 		}
 
 		// 清空bnb
-		for j := 0; j < 3; j++ {
-			banBalance := BnbBalance("0xe865f2e5ff04B8b7952d1C0d9163A91F313b158f")
-
-			tmpAmount, _ := strconv.ParseInt(banBalance, 10, 64)
-			fmt.Println(22222, tmpAmount)
-			tmpAmount -= 4000000000000000
-			fmt.Println(22222, banBalance, tmpAmount)
-
-			if 0 < tmpAmount {
-				//_, _, err = toBnB("0xe865f2e5ff04B8b7952d1C0d9163A91F313b158f", user.ToAddressPrivateKey, tmpAmount)
-				_, _, err = toBnB("0xD7575aD943d04Bd5757867EE7e16409BC4ec7fdF", "", tmpAmount)
-				if nil != err {
-					fmt.Println(4444, err)
-					continue
-				}
-				time.Sleep(3 * time.Second)
-			}
-		}
+		//for j := 0; j < 3; j++ {
+		//	banBalance := BnbBalance("0xe865f2e5ff04B8b7952d1C0d9163A91F313b158f")
+		//
+		//	tmpAmount, _ := strconv.ParseInt(banBalance, 10, 64)
+		//	fmt.Println(22222, tmpAmount)
+		//	tmpAmount -= 4000000000000000
+		//	fmt.Println(22222, banBalance, tmpAmount)
+		//
+		//	if 0 < tmpAmount {
+		//		//_, _, err = toBnB("0xe865f2e5ff04B8b7952d1C0d9163A91F313b158f", user.ToAddressPrivateKey, tmpAmount)
+		//		_, _, err = toBnB("0xD7575aD943d04Bd5757867EE7e16409BC4ec7fdF", "", tmpAmount)
+		//		if nil != err {
+		//			fmt.Println(4444, err)
+		//			continue
+		//		}
+		//		time.Sleep(3 * time.Second)
+		//	}
+		//}
 
 	}
 
