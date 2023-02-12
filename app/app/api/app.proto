@@ -231,6 +231,18 @@ service App {
 			body: "send_body"
 		};
 	};
+
+	rpc AdminDailyRecommendReward (AdminDailyRecommendRewardRequest) returns (AdminDailyRecommendRewardReply) {
+		option (google.api.http) = {
+			get: "/api/admin_dhb/daily_recommend_reward"
+		};
+	};
+
+	rpc CheckAdminUserArea (CheckAdminUserAreaRequest) returns (CheckAdminUserAreaReply) {
+		option (google.api.http) = {
+			get: "/api/admin_dhb/check_admin_user_area"
+		};
+	};
 }
 
 message EthAuthorizeRequest {
@@ -381,6 +393,21 @@ message AdminRewardListReply {
 	 int64 count = 2;
 }
 
+message AdminDailyRecommendRewardRequest {
+	int32 day = 1;
+}
+
+message AdminDailyRecommendRewardReply {
+
+}
+
+message CheckAdminUserAreaRequest {
+}
+
+message CheckAdminUserAreaReply {
+
+}
+
 message AdminUserListRequest {
 	int64 page = 1;
 	string address = 2;
@@ -481,6 +508,7 @@ message AdminFeeReply {
 }
 
 message AdminDailyFeeRequest {
+	int32 day = 1;
 }
 
 message AdminDailyFeeReply {

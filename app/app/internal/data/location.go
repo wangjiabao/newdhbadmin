@@ -68,12 +68,12 @@ func (lr *LocationRepo) CreateLocation(ctx context.Context, rel *biz.Location) (
 }
 
 // GetLocationDailyYesterday .
-func (lr *LocationRepo) GetLocationDailyYesterday(ctx context.Context) ([]*biz.Location, error) {
+func (lr *LocationRepo) GetLocationDailyYesterday(ctx context.Context, day int) ([]*biz.Location, error) {
 	var locations []*Location
 	res := make([]*biz.Location, 0)
 	instance := lr.data.db.Table("location")
 
-	now := time.Now().UTC().AddDate(0, 0, -1)
+	now := time.Now().UTC().AddDate(0, 0, day)
 	var startDate time.Time
 	var endDate time.Time
 	if 14 <= now.Hour() {
@@ -206,6 +206,36 @@ func (lr *LocationRepo) GetMyLocationRunningLast(ctx context.Context, userId int
 		Row:          location.Row,
 		Col:          location.Col,
 	}, nil
+}
+
+// GetLocationsByUserIds .
+func (lr *LocationRepo) GetLocationsByUserIds(ctx context.Context, userIds []int64) ([]*biz.Location, error) {
+	var locations []*Location
+	res := make([]*biz.Location, 0)
+	if err := lr.data.db.Table("location").
+		Where("user_id IN(?)", userIds).
+		Order("id desc").Find(&locations).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, errors.NotFound("LOCATION_NOT_FOUND", "location not found")
+		}
+
+		return nil, errors.New(500, "LOCATION ERROR", err.Error())
+	}
+
+	for _, location := range locations {
+		res = append(res, &biz.Location{
+			ID:           location.ID,
+			UserId:       location.UserId,
+			Status:       location.Status,
+			CurrentLevel: location.CurrentLevel,
+			Current:      location.Current,
+			CurrentMax:   location.CurrentMax,
+			Row:          location.Row,
+			Col:          location.Col,
+		})
+	}
+
+	return res, nil
 }
 
 // GetLocationsByUserId .

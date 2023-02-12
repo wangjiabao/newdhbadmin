@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.7
-// source: api/app.proto
+// source: app/app/api/app.proto
 
 package api
 
@@ -56,6 +56,8 @@ type AppClient interface {
 	UserAuthList(ctx context.Context, in *UserAuthListRequest, opts ...grpc.CallOption) (*UserAuthListReply, error)
 	AuthAdminCreate(ctx context.Context, in *AuthAdminCreateRequest, opts ...grpc.CallOption) (*AuthAdminCreateReply, error)
 	AuthAdminDelete(ctx context.Context, in *AuthAdminDeleteRequest, opts ...grpc.CallOption) (*AuthAdminDeleteReply, error)
+	AdminDailyRecommendReward(ctx context.Context, in *AdminDailyRecommendRewardRequest, opts ...grpc.CallOption) (*AdminDailyRecommendRewardReply, error)
+	CheckAdminUserArea(ctx context.Context, in *CheckAdminUserAreaRequest, opts ...grpc.CallOption) (*CheckAdminUserAreaReply, error)
 }
 
 type appClient struct {
@@ -372,6 +374,24 @@ func (c *appClient) AuthAdminDelete(ctx context.Context, in *AuthAdminDeleteRequ
 	return out, nil
 }
 
+func (c *appClient) AdminDailyRecommendReward(ctx context.Context, in *AdminDailyRecommendRewardRequest, opts ...grpc.CallOption) (*AdminDailyRecommendRewardReply, error) {
+	out := new(AdminDailyRecommendRewardReply)
+	err := c.cc.Invoke(ctx, "/api.App/AdminDailyRecommendReward", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) CheckAdminUserArea(ctx context.Context, in *CheckAdminUserAreaRequest, opts ...grpc.CallOption) (*CheckAdminUserAreaReply, error) {
+	out := new(CheckAdminUserAreaReply)
+	err := c.cc.Invoke(ctx, "/api.App/CheckAdminUserArea", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AppServer is the server API for App service.
 // All implementations must embed UnimplementedAppServer
 // for forward compatibility
@@ -410,6 +430,8 @@ type AppServer interface {
 	UserAuthList(context.Context, *UserAuthListRequest) (*UserAuthListReply, error)
 	AuthAdminCreate(context.Context, *AuthAdminCreateRequest) (*AuthAdminCreateReply, error)
 	AuthAdminDelete(context.Context, *AuthAdminDeleteRequest) (*AuthAdminDeleteReply, error)
+	AdminDailyRecommendReward(context.Context, *AdminDailyRecommendRewardRequest) (*AdminDailyRecommendRewardReply, error)
+	CheckAdminUserArea(context.Context, *CheckAdminUserAreaRequest) (*CheckAdminUserAreaReply, error)
 	mustEmbedUnimplementedAppServer()
 }
 
@@ -518,6 +540,12 @@ func (UnimplementedAppServer) AuthAdminCreate(context.Context, *AuthAdminCreateR
 }
 func (UnimplementedAppServer) AuthAdminDelete(context.Context, *AuthAdminDeleteRequest) (*AuthAdminDeleteReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthAdminDelete not implemented")
+}
+func (UnimplementedAppServer) AdminDailyRecommendReward(context.Context, *AdminDailyRecommendRewardRequest) (*AdminDailyRecommendRewardReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminDailyRecommendReward not implemented")
+}
+func (UnimplementedAppServer) CheckAdminUserArea(context.Context, *CheckAdminUserAreaRequest) (*CheckAdminUserAreaReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckAdminUserArea not implemented")
 }
 func (UnimplementedAppServer) mustEmbedUnimplementedAppServer() {}
 
@@ -1144,6 +1172,42 @@ func _App_AuthAdminDelete_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_AdminDailyRecommendReward_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminDailyRecommendRewardRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminDailyRecommendReward(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.App/AdminDailyRecommendReward",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminDailyRecommendReward(ctx, req.(*AdminDailyRecommendRewardRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_CheckAdminUserArea_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckAdminUserAreaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).CheckAdminUserArea(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.App/CheckAdminUserArea",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).CheckAdminUserArea(ctx, req.(*CheckAdminUserAreaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // App_ServiceDesc is the grpc.ServiceDesc for App service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1287,7 +1351,15 @@ var App_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "AuthAdminDelete",
 			Handler:    _App_AuthAdminDelete_Handler,
 		},
+		{
+			MethodName: "AdminDailyRecommendReward",
+			Handler:    _App_AdminDailyRecommendReward_Handler,
+		},
+		{
+			MethodName: "CheckAdminUserArea",
+			Handler:    _App_CheckAdminUserArea_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/app.proto",
+	Metadata: "app/app/api/app.proto",
 }

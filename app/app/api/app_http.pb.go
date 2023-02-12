@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-http v2.5.0
 // - protoc             v3.21.7
-// source: api/app.proto
+// source: app/app/api/app.proto
 
 package api
 
@@ -26,6 +26,7 @@ const OperationAppAdminConfig = "/api.App/AdminConfig"
 const OperationAppAdminConfigUpdate = "/api.App/AdminConfigUpdate"
 const OperationAppAdminCreateAccount = "/api.App/AdminCreateAccount"
 const OperationAppAdminDailyFee = "/api.App/AdminDailyFee"
+const OperationAppAdminDailyRecommendReward = "/api.App/AdminDailyRecommendReward"
 const OperationAppAdminFee = "/api.App/AdminFee"
 const OperationAppAdminList = "/api.App/AdminList"
 const OperationAppAdminLocationAllList = "/api.App/AdminLocationAllList"
@@ -43,6 +44,7 @@ const OperationAppAdminWithdrawList = "/api.App/AdminWithdrawList"
 const OperationAppAuthAdminCreate = "/api.App/AuthAdminCreate"
 const OperationAppAuthAdminDelete = "/api.App/AuthAdminDelete"
 const OperationAppAuthList = "/api.App/AuthList"
+const OperationAppCheckAdminUserArea = "/api.App/CheckAdminUserArea"
 const OperationAppDeposit = "/api.App/Deposit"
 const OperationAppFeeRewardList = "/api.App/FeeRewardList"
 const OperationAppMyAuthList = "/api.App/MyAuthList"
@@ -62,6 +64,7 @@ type AppHTTPServer interface {
 	AdminConfigUpdate(context.Context, *AdminConfigUpdateRequest) (*AdminConfigUpdateReply, error)
 	AdminCreateAccount(context.Context, *AdminCreateAccountRequest) (*AdminCreateAccountReply, error)
 	AdminDailyFee(context.Context, *AdminDailyFeeRequest) (*AdminDailyFeeReply, error)
+	AdminDailyRecommendReward(context.Context, *AdminDailyRecommendRewardRequest) (*AdminDailyRecommendRewardReply, error)
 	AdminFee(context.Context, *AdminFeeRequest) (*AdminFeeReply, error)
 	AdminList(context.Context, *AdminListRequest) (*AdminListReply, error)
 	AdminLocationAllList(context.Context, *AdminLocationAllListRequest) (*AdminLocationAllListReply, error)
@@ -79,6 +82,7 @@ type AppHTTPServer interface {
 	AuthAdminCreate(context.Context, *AuthAdminCreateRequest) (*AuthAdminCreateReply, error)
 	AuthAdminDelete(context.Context, *AuthAdminDeleteRequest) (*AuthAdminDeleteReply, error)
 	AuthList(context.Context, *AuthListRequest) (*AuthListReply, error)
+	CheckAdminUserArea(context.Context, *CheckAdminUserAreaRequest) (*CheckAdminUserAreaReply, error)
 	Deposit(context.Context, *DepositRequest) (*DepositReply, error)
 	FeeRewardList(context.Context, *FeeRewardListRequest) (*FeeRewardListReply, error)
 	MyAuthList(context.Context, *MyAuthListRequest) (*MyAuthListReply, error)
@@ -127,6 +131,8 @@ func RegisterAppHTTPServer(s *http.Server, srv AppHTTPServer) {
 	r.GET("/api/admin_dhb/user_auth_list", _App_UserAuthList0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/auth_create", _App_AuthAdminCreate0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/auth_delete", _App_AuthAdminDelete0_HTTP_Handler(srv))
+	r.GET("/api/admin_dhb/daily_recommend_reward", _App_AdminDailyRecommendReward0_HTTP_Handler(srv))
+	r.GET("/api/admin_dhb/check_admin_user_area", _App_CheckAdminUserArea0_HTTP_Handler(srv))
 }
 
 func _App_UserInfo0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
@@ -805,6 +811,44 @@ func _App_AuthAdminDelete0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context
 	}
 }
 
+func _App_AdminDailyRecommendReward0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in AdminDailyRecommendRewardRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAppAdminDailyRecommendReward)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.AdminDailyRecommendReward(ctx, req.(*AdminDailyRecommendRewardRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*AdminDailyRecommendRewardReply)
+		return ctx.Result(200, reply)
+	}
+}
+
+func _App_CheckAdminUserArea0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in CheckAdminUserAreaRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAppCheckAdminUserArea)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.CheckAdminUserArea(ctx, req.(*CheckAdminUserAreaRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*CheckAdminUserAreaReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 type AppHTTPClient interface {
 	AdminAll(ctx context.Context, req *AdminAllRequest, opts ...http.CallOption) (rsp *AdminAllReply, err error)
 	AdminBalanceUpdate(ctx context.Context, req *AdminBalanceUpdateRequest, opts ...http.CallOption) (rsp *AdminBalanceUpdateReply, err error)
@@ -813,6 +857,7 @@ type AppHTTPClient interface {
 	AdminConfigUpdate(ctx context.Context, req *AdminConfigUpdateRequest, opts ...http.CallOption) (rsp *AdminConfigUpdateReply, err error)
 	AdminCreateAccount(ctx context.Context, req *AdminCreateAccountRequest, opts ...http.CallOption) (rsp *AdminCreateAccountReply, err error)
 	AdminDailyFee(ctx context.Context, req *AdminDailyFeeRequest, opts ...http.CallOption) (rsp *AdminDailyFeeReply, err error)
+	AdminDailyRecommendReward(ctx context.Context, req *AdminDailyRecommendRewardRequest, opts ...http.CallOption) (rsp *AdminDailyRecommendRewardReply, err error)
 	AdminFee(ctx context.Context, req *AdminFeeRequest, opts ...http.CallOption) (rsp *AdminFeeReply, err error)
 	AdminList(ctx context.Context, req *AdminListRequest, opts ...http.CallOption) (rsp *AdminListReply, err error)
 	AdminLocationAllList(ctx context.Context, req *AdminLocationAllListRequest, opts ...http.CallOption) (rsp *AdminLocationAllListReply, err error)
@@ -830,6 +875,7 @@ type AppHTTPClient interface {
 	AuthAdminCreate(ctx context.Context, req *AuthAdminCreateRequest, opts ...http.CallOption) (rsp *AuthAdminCreateReply, err error)
 	AuthAdminDelete(ctx context.Context, req *AuthAdminDeleteRequest, opts ...http.CallOption) (rsp *AuthAdminDeleteReply, err error)
 	AuthList(ctx context.Context, req *AuthListRequest, opts ...http.CallOption) (rsp *AuthListReply, err error)
+	CheckAdminUserArea(ctx context.Context, req *CheckAdminUserAreaRequest, opts ...http.CallOption) (rsp *CheckAdminUserAreaReply, err error)
 	Deposit(ctx context.Context, req *DepositRequest, opts ...http.CallOption) (rsp *DepositReply, err error)
 	FeeRewardList(ctx context.Context, req *FeeRewardListRequest, opts ...http.CallOption) (rsp *FeeRewardListReply, err error)
 	MyAuthList(ctx context.Context, req *MyAuthListRequest, opts ...http.CallOption) (rsp *MyAuthListReply, err error)
@@ -933,6 +979,19 @@ func (c *AppHTTPClientImpl) AdminDailyFee(ctx context.Context, in *AdminDailyFee
 	pattern := "/api/admin_dhb/daily_fee"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationAppAdminDailyFee))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
+}
+
+func (c *AppHTTPClientImpl) AdminDailyRecommendReward(ctx context.Context, in *AdminDailyRecommendRewardRequest, opts ...http.CallOption) (*AdminDailyRecommendRewardReply, error) {
+	var out AdminDailyRecommendRewardReply
+	pattern := "/api/admin_dhb/daily_recommend_reward"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationAppAdminDailyRecommendReward))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {
@@ -1154,6 +1213,19 @@ func (c *AppHTTPClientImpl) AuthList(ctx context.Context, in *AuthListRequest, o
 	pattern := "/api/admin_dhb/auth_list"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationAppAuthList))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
+}
+
+func (c *AppHTTPClientImpl) CheckAdminUserArea(ctx context.Context, in *CheckAdminUserAreaRequest, opts ...http.CallOption) (*CheckAdminUserAreaReply, error) {
+	var out CheckAdminUserAreaReply
+	pattern := "/api/admin_dhb/check_admin_user_area"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationAppCheckAdminUserArea))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {

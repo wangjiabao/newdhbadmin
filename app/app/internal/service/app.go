@@ -494,6 +494,14 @@ func (a *AppService) AdminVipUpdate(ctx context.Context, req *v1.AdminVipUpdateR
 	return a.uuc.AdminVipUpdate(ctx, req)
 }
 
+func (a *AppService) AdminDailyRecommendReward(ctx context.Context, req *v1.AdminDailyRecommendRewardRequest) (*v1.AdminDailyRecommendRewardReply, error) {
+	return a.uuc.AdminDailyRecommendReward(ctx, req)
+}
+
+func (a *AppService) CheckAdminUserArea(ctx context.Context, req *v1.CheckAdminUserAreaRequest) (*v1.CheckAdminUserAreaReply, error) {
+	return a.uuc.CheckAdminUserArea(ctx, req)
+}
+
 func (a *AppService) AdminLocationInsert(ctx context.Context, req *v1.AdminLocationInsertRequest) (*v1.AdminLocationInsertReply, error) {
 	_, err := a.ruc.AdminLocationInsert(ctx, req.SendBody.UserId, req.SendBody.Amount)
 	if nil != err {

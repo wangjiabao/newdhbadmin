@@ -17,6 +17,16 @@ type User struct {
 	UpdatedAt time.Time `gorm:"type:datetime;not null"`
 }
 
+type UserArea struct {
+	ID         int64     `gorm:"primarykey;type:int"`
+	UserId     int64     `gorm:"type:int;not null"`
+	Level      int64     `gorm:"type:int;not null"`
+	Amount     int64     `gorm:"type:bigint;not null"`
+	SelfAmount int64     `gorm:"type:bigint;not null"`
+	CreatedAt  time.Time `gorm:"type:datetime;not null"`
+	UpdatedAt  time.Time `gorm:"type:datetime;not null"`
+}
+
 type UserInfo struct {
 	ID               int64     `gorm:"primarykey;type:int"`
 	UserId           int64     `gorm:"type:int;not null"`
@@ -253,6 +263,105 @@ func (c *ConfigRepo) GetConfigs(ctx context.Context) ([]*biz.Config, error) {
 	}
 
 	return res, nil
+}
+
+// GetUserAreas .
+func (ur *UserRecommendRepo) GetUserAreas(ctx context.Context, userIds []int64) ([]*biz.UserArea, error) {
+
+	var userAreas []*UserArea
+	if err := ur.data.db.Where("user_id in (?)", userIds).Table("user_area").Find(&userAreas).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New(500, "USER AREA NOT FOUND", err.Error())
+		}
+
+		return nil, errors.New(500, "USER AREA ERROR", err.Error())
+	}
+
+	res := make([]*biz.UserArea, 0)
+	for _, v := range userAreas {
+		res = append(res, &biz.UserArea{
+			ID:         v.ID,
+			UserId:     v.UserId,
+			Amount:     v.Amount,
+			SelfAmount: v.SelfAmount,
+			Level:      v.Level,
+		})
+	}
+
+	return res, nil
+}
+
+// UpdateUserAreaAmount .
+func (ur *UserRecommendRepo) UpdateUserAreaAmount(ctx context.Context, userId int64, amount int64) (bool, error) {
+	// 业务上限制了错误的上一级未insert下一级优先insert的情况
+	var err error
+	if err = ur.data.DB(ctx).Table("user_area").
+		Where("user_id=?", userId).
+		Updates(map[string]interface{}{"amount": gorm.Expr("amount + ?", amount)}).Error; nil != err {
+		return false, errors.NotFound("user balance err", "user area not found")
+	}
+
+	return true, nil
+}
+
+// UpdateUserAreaSelfAmount .
+func (ur *UserRecommendRepo) UpdateUserAreaSelfAmount(ctx context.Context, userId int64, amount int64) (bool, error) {
+	// 业务上限制了错误的上一级未insert下一级优先insert的情况
+	var err error
+	if err = ur.data.DB(ctx).Table("user_area").
+		Where("user_id=?", userId).
+		Updates(map[string]interface{}{"self_amount": gorm.Expr("self_amount + ?", amount)}).Error; nil != err {
+		return false, errors.NotFound("user balance err", "user area not found")
+	}
+
+	return true, nil
+}
+
+// UpdateUserAreaLevel .
+func (ur *UserRecommendRepo) UpdateUserAreaLevel(ctx context.Context, userId int64, level int64) (bool, error) {
+	// 业务上限制了错误的上一级未insert下一级优先insert的情况
+	var err error
+	if err = ur.data.DB(ctx).Table("user_area").
+		Where("user_id=?", userId).
+		Updates(map[string]interface{}{"level": level}).Error; nil != err {
+		return false, errors.NotFound("user balance err", "user area not found")
+	}
+
+	return true, nil
+}
+
+// CreateUserArea .
+func (ur *UserRecommendRepo) CreateUserArea(ctx context.Context, u *biz.User) (bool, error) {
+	// 业务上限制了错误的上一级未insert下一级优先insert的情况
+	var userArea UserArea
+	userArea.UserId = u.ID
+	res := ur.data.DB(ctx).Table("user_area").Create(&userArea)
+	if res.Error != nil {
+		return false, errors.New(500, "CREATE_USER_AREA_ERROR", "用户区信息创建失败")
+	}
+
+	return true, nil
+}
+
+// GetUserArea .
+func (ur *UserRecommendRepo) GetUserArea(ctx context.Context, userId int64) (*biz.UserArea, error) {
+
+	var userArea *UserArea
+	if err := ur.data.db.Where("user_id=?", userId).Table("user_area").First(&userArea).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New(500, "USER AREA NOT FOUND", err.Error())
+		}
+
+		return nil, errors.New(500, "USER AREA ERROR", err.Error())
+	}
+
+	return &biz.UserArea{
+		ID:         userArea.ID,
+		UserId:     userArea.UserId,
+		Amount:     userArea.Amount,
+		SelfAmount: userArea.SelfAmount,
+		Level:      userArea.Level,
+	}, nil
 }
 
 // UpdateConfig .
@@ -658,6 +767,48 @@ func (ub *UserBalanceRepo) UpdateBalance(ctx context.Context, userId int64, amou
 	}
 
 	return true, nil
+}
+
+// UserDailyRecommendArea .
+func (ub *UserBalanceRepo) UserDailyRecommendArea(ctx context.Context, userId int64, amount int64, status string) (int64, error) {
+	var err error
+	if "running" == status {
+		if err = ub.data.DB(ctx).Table("user_balance").
+			Where("user_id=?", userId).
+			Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
+			return 0, errors.NotFound("user balance err", "user balance not found")
+		}
+
+	}
+
+	var userBalance UserBalance
+	err = ub.data.DB(ctx).Where(&UserBalance{UserId: userId}).Table("user_balance").First(&userBalance).Error
+	if err != nil {
+		return 0, err
+	}
+
+	var userBalanceRecode UserBalanceRecord
+	userBalanceRecode.Balance = userBalance.BalanceUsdt
+	userBalanceRecode.UserId = userBalance.UserId
+	userBalanceRecode.Type = "reward"
+	userBalanceRecode.Amount = amount
+	err = ub.data.DB(ctx).Table("user_balance_record").Create(&userBalanceRecode).Error
+	if err != nil {
+		return 0, err
+	}
+
+	var reward Reward
+	reward.UserId = userBalance.UserId
+	reward.Amount = amount
+	reward.BalanceRecordId = userBalanceRecode.ID
+	reward.Type = "system_reward_daily"    // 本次分红的行为类型
+	reward.Reason = "daily_recommend_area" // 给我分红的理由
+	err = ub.data.DB(ctx).Table("reward").Create(&reward).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return userBalanceRecode.ID, nil
 }
 
 // UpdateAdminPassword .
@@ -1423,11 +1574,32 @@ func (ub *UserBalanceRepo) SystemWithdrawReward(ctx context.Context, amount int6
 	return nil
 }
 
+// GetAllUsers .
+func (u *UserRepo) GetAllUsers(ctx context.Context) ([]*biz.User, error) {
+	var users []*User
+	if err := u.data.db.Table("user").Find(&users).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.NotFound("USER_NOT_FOUND", "user not found")
+		}
+
+		return nil, errors.New(500, "USER ERROR", err.Error())
+	}
+
+	res := make([]*biz.User, 0)
+	for _, item := range users {
+		res = append(res, &biz.User{
+			ID:      item.ID,
+			Address: item.Address,
+		})
+	}
+	return res, nil
+}
+
 // GetSystemYesterdayDailyReward .
-func (ub *UserBalanceRepo) GetSystemYesterdayDailyReward(ctx context.Context) (*biz.Reward, error) {
+func (ub *UserBalanceRepo) GetSystemYesterdayDailyReward(ctx context.Context, day int) (*biz.Reward, error) {
 	var reward Reward
 
-	now := time.Now().UTC().AddDate(0, 0, -1)
+	now := time.Now().UTC().AddDate(0, 0, day)
 	var startDate time.Time
 	var endDate time.Time
 	if 14 <= now.Hour() {
