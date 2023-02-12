@@ -118,6 +118,7 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 		recommendNeedVip4           int64
 		recommendNeedVip5           int64
 		timeAgain                   int64
+		recommendNeed               int64
 		locationRowConfig           int64
 	)
 	// 配置
@@ -127,7 +128,9 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 		"recommend_need_vip3", "recommend_need_vip4", "recommend_need_vip5", "time_again", "location_row", "recommend_need_eleven_to_twenty", "recommend_need_one_to_ten")
 	if nil != configs {
 		for _, vConfig := range configs {
-			if "recommend_need_one_to_ten" == vConfig.KeyName {
+			if "recommend_need" == vConfig.KeyName {
+				recommendNeed, _ = strconv.ParseInt(vConfig.Value, 10, 64)
+			} else if "recommend_need_one_to_ten" == vConfig.KeyName {
 				recommendNeedOneToTen, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			} else if "recommend_need_eleven_to_twenty" == vConfig.KeyName {
 				recommendNeedElevenToTwenty, _ = strconv.ParseInt(vConfig.Value, 10, 64)
@@ -380,7 +383,7 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 				if nil != myUserRecommendUserLocationLast {
 					tmpStatus := myUserRecommendUserLocationLast.Status // 现在还在运行中
 
-					tmpBalanceAmount := currentValue / 100 * recommendNeedOneToTen // 记录下一次
+					tmpBalanceAmount := currentValue / 100 * recommendNeed // 记录下一次
 					myUserRecommendUserLocationLast.Status = "running"
 					myUserRecommendUserLocationLast.Current += tmpBalanceAmount
 					if myUserRecommendUserLocationLast.Current >= myUserRecommendUserLocationLast.CurrentMax { // 占位分红人分满停止
@@ -464,7 +467,7 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 
 				if 2 <= len(tmpRecommendUserIds) {
 					fmt.Println(tmpRecommendUserIds)
-					lasAmount := currentValue / 100 * recommendNeedOneToTen
+					lasAmount := currentValue / 100 * recommendNeed
 					for i := 2; i <= 20; i++ {
 						// 有占位信息，推荐人推荐人的上一代
 						if len(tmpRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
