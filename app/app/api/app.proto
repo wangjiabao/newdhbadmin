@@ -243,6 +243,26 @@ service App {
 			get: "/api/admin_dhb/check_admin_user_area"
 		};
 	};
+
+	rpc AdminAreaLevelUpdate (AdminAreaLevelUpdateRequest) returns (AdminAreaLevelUpdateReply) {
+		option (google.api.http) = {
+			post: "/api/admin_dhb/level_update"
+			body: "send_body"
+		};
+	};
+}
+
+message AdminAreaLevelUpdateRequest {
+	message SendBody{
+		int64 user_id = 1;
+		int64 level = 2;
+	}
+
+	SendBody send_body = 1;
+}
+
+message AdminAreaLevelUpdateReply {
+
 }
 
 message EthAuthorizeRequest {
@@ -426,6 +446,8 @@ message AdminUserListReply {
 		int64 vip = 5;
 		int64 monthRecommend = 7;
 		int64 historyRecommend = 6;
+		int64 areaAmount = 9;
+		int64 areaMaxAmount = 10;
 	}
 	int64 count = 2;
 }

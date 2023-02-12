@@ -20,6 +20,7 @@ var _ = binding.EncodeURL
 const _ = http.SupportPackageIsVersion1
 
 const OperationAppAdminAll = "/api.App/AdminAll"
+const OperationAppAdminAreaLevelUpdate = "/api.App/AdminAreaLevelUpdate"
 const OperationAppAdminBalanceUpdate = "/api.App/AdminBalanceUpdate"
 const OperationAppAdminChangePassword = "/api.App/AdminChangePassword"
 const OperationAppAdminConfig = "/api.App/AdminConfig"
@@ -58,6 +59,7 @@ const OperationAppWithdrawList = "/api.App/WithdrawList"
 
 type AppHTTPServer interface {
 	AdminAll(context.Context, *AdminAllRequest) (*AdminAllReply, error)
+	AdminAreaLevelUpdate(context.Context, *AdminAreaLevelUpdateRequest) (*AdminAreaLevelUpdateReply, error)
 	AdminBalanceUpdate(context.Context, *AdminBalanceUpdateRequest) (*AdminBalanceUpdateReply, error)
 	AdminChangePassword(context.Context, *AdminChangePasswordRequest) (*AdminChangePasswordReply, error)
 	AdminConfig(context.Context, *AdminConfigRequest) (*AdminConfigReply, error)
@@ -133,6 +135,7 @@ func RegisterAppHTTPServer(s *http.Server, srv AppHTTPServer) {
 	r.POST("/api/admin_dhb/auth_delete", _App_AuthAdminDelete0_HTTP_Handler(srv))
 	r.GET("/api/admin_dhb/daily_recommend_reward", _App_AdminDailyRecommendReward0_HTTP_Handler(srv))
 	r.GET("/api/admin_dhb/check_admin_user_area", _App_CheckAdminUserArea0_HTTP_Handler(srv))
+	r.POST("/api/admin_dhb/level_update", _App_AdminAreaLevelUpdate0_HTTP_Handler(srv))
 }
 
 func _App_UserInfo0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
@@ -849,8 +852,31 @@ func _App_CheckAdminUserArea0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Cont
 	}
 }
 
+func _App_AdminAreaLevelUpdate0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in AdminAreaLevelUpdateRequest
+		if err := ctx.Bind(&in.SendBody); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAppAdminAreaLevelUpdate)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.AdminAreaLevelUpdate(ctx, req.(*AdminAreaLevelUpdateRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*AdminAreaLevelUpdateReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 type AppHTTPClient interface {
 	AdminAll(ctx context.Context, req *AdminAllRequest, opts ...http.CallOption) (rsp *AdminAllReply, err error)
+	AdminAreaLevelUpdate(ctx context.Context, req *AdminAreaLevelUpdateRequest, opts ...http.CallOption) (rsp *AdminAreaLevelUpdateReply, err error)
 	AdminBalanceUpdate(ctx context.Context, req *AdminBalanceUpdateRequest, opts ...http.CallOption) (rsp *AdminBalanceUpdateReply, err error)
 	AdminChangePassword(ctx context.Context, req *AdminChangePasswordRequest, opts ...http.CallOption) (rsp *AdminChangePasswordReply, err error)
 	AdminConfig(ctx context.Context, req *AdminConfigRequest, opts ...http.CallOption) (rsp *AdminConfigReply, err error)
@@ -903,6 +929,19 @@ func (c *AppHTTPClientImpl) AdminAll(ctx context.Context, in *AdminAllRequest, o
 	opts = append(opts, http.Operation(OperationAppAdminAll))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
+}
+
+func (c *AppHTTPClientImpl) AdminAreaLevelUpdate(ctx context.Context, in *AdminAreaLevelUpdateRequest, opts ...http.CallOption) (*AdminAreaLevelUpdateReply, error) {
+	var out AdminAreaLevelUpdateReply
+	pattern := "/api/admin_dhb/level_update"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationAppAdminAreaLevelUpdate))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in.SendBody, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

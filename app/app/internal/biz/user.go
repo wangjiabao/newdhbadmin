@@ -139,10 +139,10 @@ type ConfigRepo interface {
 
 type UserBalanceRepo interface {
 	CreateUserBalance(ctx context.Context, u *User) (*UserBalance, error)
-	LocationReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string) (int64, error)
-	WithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string) (int64, error)
-	RecommendReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error)
-	RecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64) (int64, error)
+	LocationReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string, status string) (int64, error)
+	WithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string, status string) (int64, error)
+	RecommendReward(ctx context.Context, userId int64, amount int64, locationId int64, status string) (int64, error)
+	RecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64, status string) (int64, error)
 	SystemWithdrawReward(ctx context.Context, amount int64, locationId int64) error
 	SystemReward(ctx context.Context, amount int64, locationId int64) error
 	SystemDailyReward(ctx context.Context, amount int64, locationId int64) error
@@ -150,12 +150,12 @@ type UserBalanceRepo interface {
 	SystemFee(ctx context.Context, amount int64, locationId int64) error
 	UserFee(ctx context.Context, userId int64, amount int64) (int64, error)
 	UserDailyFee(ctx context.Context, userId int64, amount int64) (int64, error)
-	RecommendWithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error)
-	RecommendWithdrawTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64) (int64, error)
-	NormalRecommendReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error)
-	NormalRecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, reasonId int64) (int64, error)
-	NormalWithdrawRecommendReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error)
-	NormalWithdrawRecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, reasonId int64) (int64, error)
+	RecommendWithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64, status string) (int64, error)
+	RecommendWithdrawTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64, status string) (int64, error)
+	NormalRecommendReward(ctx context.Context, userId int64, amount int64, locationId int64, status string) (int64, error)
+	NormalRecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, reasonId int64, status string) (int64, error)
+	NormalWithdrawRecommendReward(ctx context.Context, userId int64, amount int64, locationId int64, status string) (int64, error)
+	NormalWithdrawRecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, reasonId int64, status string) (int64, error)
 	Deposit(ctx context.Context, userId int64, amount int64, dhbAmount int64) (int64, error)
 	DepositLast(ctx context.Context, userId int64, lastAmount int64, locationId int64) (int64, error)
 	DepositDhb(ctx context.Context, userId int64, amount int64) (int64, error)
@@ -322,194 +322,7 @@ func (uuc *UserUseCase) GetExistUserByAddressOrCreate(ctx context.Context, u *Us
 }
 
 func (uuc *UserUseCase) UserInfo(ctx context.Context, user *User) (*v1.UserInfoReply, error) {
-	var (
-		myUser                     *User
-		userInfo                   *UserInfo
-		locations                  []*Location
-		userBalance                *UserBalance
-		userRecommend              *UserRecommend
-		userRecommends             []*UserRecommend
-		userRewards                []*Reward
-		rewardLocations            []*Location
-		userCurrentMonthRecommends []*UserCurrentMonthRecommend
-		userRewardTotal            int64
-		encodeString               string
-		myUserRecommendUserId      int64
-		myRecommendUser            *User
-		myRow                      int64
-		rowNum                     int64
-		colNum                     int64
-		myCol                      int64
-		recommendTeamNum           int64
-		recommendTotal             int64
-		locationTotal              int64
-		feeTotal                   int64
-		myCode                     string
-		inviteUserAddress          string
-		amount                     string
-		status                     = "no"
-		currentMonthRecommendNum   int64
-		configs                    []*Config
-		myLastStopLocation         *Location
-		myLastLocationCurrent      int64
-		hasRunningLocation         bool
-		level1Dhb                  string
-		level2Dhb                  string
-		level3Dhb                  string
-		userCount                  string
-		err                        error
-	)
-
-	myUser, err = uuc.repo.GetUserById(ctx, user.ID)
-	if nil != err {
-		return nil, err
-	}
-
-	userInfo, err = uuc.uiRepo.GetUserInfoByUserId(ctx, myUser.ID)
-	if nil != err {
-		return nil, err
-	}
-
-	locations, err = uuc.locationRepo.GetLocationsByUserId(ctx, myUser.ID)
-	if nil != locations && 0 < len(locations) {
-		status = "stop"
-		for _, v := range locations {
-			if "running" == v.Status {
-				status = "running"
-				if 0 == v.Current {
-					status = "yes"
-				}
-				hasRunningLocation = true
-				amount = fmt.Sprintf("%.2f", float64(v.CurrentMax-v.Current)/float64(10000000000))
-				myCol = v.Col
-				myRow = v.Row
-				break
-			}
-		}
-	}
-
-	now := time.Now().UTC().Add(8 * time.Hour)
-	myLastStopLocation, err = uuc.locationRepo.GetMyStopLocationLast(ctx, myUser.ID) // 冻结
-	if nil != myLastStopLocation && now.Before(myLastStopLocation.StopDate.Add(24*time.Hour)) && !hasRunningLocation {
-		myLastLocationCurrent = myLastStopLocation.Current - myLastStopLocation.CurrentMax // 补上
-	}
-
-	userBalance, err = uuc.ubRepo.GetUserBalance(ctx, myUser.ID)
-	if nil != err {
-		return nil, err
-	}
-
-	userRecommend, err = uuc.urRepo.GetUserRecommendByUserId(ctx, myUser.ID)
-	if nil == userRecommend {
-		return nil, err
-	}
-
-	myCode = "D" + strconv.FormatInt(myUser.ID, 10)
-	codeByte := []byte(myCode)
-	encodeString = base64.StdEncoding.EncodeToString(codeByte)
-
-	if "" != userRecommend.RecommendCode {
-		tmpRecommendUserIds := strings.Split(userRecommend.RecommendCode, "D")
-		if 2 <= len(tmpRecommendUserIds) {
-			myUserRecommendUserId, _ = strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-1], 10, 64) // 最后一位是直推人
-		}
-		myRecommendUser, err = uuc.repo.GetUserById(ctx, myUserRecommendUserId)
-		if nil != err {
-			return nil, err
-		}
-		inviteUserAddress = myRecommendUser.Address
-		myCode = userRecommend.RecommendCode + myCode
-	}
-
-	// 团队
-	userRecommends, err = uuc.urRepo.GetUserRecommendLikeCode(ctx, myCode)
-	if nil != userRecommends {
-		recommendTeamNum = int64(len(userRecommends))
-	}
-
-	// 累计奖励
-	userRewards, err = uuc.ubRepo.GetUserRewardByUserId(ctx, myUser.ID)
-	if nil != userRewards {
-		for _, vUserReward := range userRewards {
-			userRewardTotal += vUserReward.Amount
-			if "recommend" == vUserReward.Reason || "recommend_vip" == vUserReward.Reason {
-				recommendTotal += vUserReward.Amount
-			} else if "location" == vUserReward.Reason {
-				locationTotal += vUserReward.Amount
-			} else if "fee" == vUserReward.Reason {
-				feeTotal += vUserReward.Amount
-			}
-		}
-	}
-
-	// 位置
-	if 0 < myRow && 0 < myCol {
-		rewardLocations, err = uuc.locationRepo.GetRewardLocationByRowOrCol(ctx, myRow, myCol)
-		if nil != rewardLocations {
-			for _, vRewardLocation := range rewardLocations {
-				if myRow == vRewardLocation.Row && myCol == vRewardLocation.Col { // 跳过自己
-					continue
-				}
-				if myRow == vRewardLocation.Row {
-					colNum++
-				}
-				if myCol == vRewardLocation.Col {
-					rowNum++
-				}
-			}
-		}
-	}
-
-	// 当月推荐人数
-	userCurrentMonthRecommends, err = uuc.userCurrentMonthRecommendRepo.GetUserCurrentMonthRecommendByUserId(ctx, myUser.ID)
-	if nil != userCurrentMonthRecommends {
-		for _, vUserCurrentMonthRecommend := range userCurrentMonthRecommends {
-			if vUserCurrentMonthRecommend.Date.After(time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)) {
-				currentMonthRecommendNum++
-			}
-		}
-	}
-
-	// 配置
-	configs, err = uuc.configRepo.GetConfigByKeys(ctx, "user_count")
-	if nil != configs {
-		for _, vConfig := range configs {
-			if "user_count" == vConfig.KeyName {
-				userCount = vConfig.Value
-			}
-		}
-	}
-
-	return &v1.UserInfoReply{
-		Address:                  myUser.Address,
-		Level:                    userInfo.Vip,
-		Status:                   status,
-		Amount:                   amount,
-		BalanceUsdt:              fmt.Sprintf("%.2f", float64(userBalance.BalanceUsdt)/float64(10000000000)),
-		BalanceDhb:               fmt.Sprintf("%.2f", float64(userBalance.BalanceDhb)/float64(10000000000)),
-		InviteUrl:                encodeString,
-		InviteUserAddress:        inviteUserAddress,
-		RecommendNum:             userInfo.HistoryRecommend,
-		RecommendTeamNum:         recommendTeamNum,
-		Total:                    fmt.Sprintf("%.2f", float64(userRewardTotal)/float64(10000000000)),
-		Row:                      rowNum,
-		Col:                      colNum,
-		CurrentMonthRecommendNum: currentMonthRecommendNum,
-		RecommendTotal:           fmt.Sprintf("%.2f", float64(recommendTotal)/float64(10000000000)),
-		FeeTotal:                 fmt.Sprintf("%.2f", float64(feeTotal)/float64(10000000000)),
-		LocationTotal:            fmt.Sprintf("%.2f", float64(locationTotal)/float64(10000000000)),
-		Level1Dhb:                level1Dhb,
-		Level2Dhb:                level2Dhb,
-		Level3Dhb:                level3Dhb,
-		Usdt:                     "0x55d398326f99059fF775485246999027B3197955",
-		Dhb:                      "0xb7864be857e00796e6f79e057b3ef1032cbe4a06",
-		Account:                  "0x636F2deAAb4C9A8F3c808D23F16f456009C4e9Fd",
-		//Usdt:                     "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd",
-		//Dhb:                      "0x96BD81715c69eE013405B4005Ba97eA1f420fd87",
-		//Account:                  "0xe865f2e5ff04b8b7952d1c0d9163a91f313b158f",
-		AmountB:   fmt.Sprintf("%.2f", float64(myLastLocationCurrent)/float64(10000000000)),
-		UserCount: userCount,
-	}, nil
+	return &v1.UserInfoReply{}, nil
 }
 
 func (uuc *UserUseCase) RewardList(ctx context.Context, req *v1.RewardListRequest, user *User) (*v1.RewardListReply, error) {
@@ -820,6 +633,46 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 	userCurrentMonthRecommendCount, err = uuc.userCurrentMonthRecommendRepo.GetUserCurrentMonthRecommendCountByUserIds(ctx, userIds...)
 
 	for _, v := range users {
+		// 伞下业绩
+		var (
+			userRecommend      *UserRecommend
+			myRecommendUsers   []*UserRecommend
+			userAreas          []*UserArea
+			maxAreaAmount      int64
+			areaAmount         int64
+			myRecommendUserIds []int64
+		)
+
+		userRecommend, err = uuc.urRepo.GetUserRecommendByUserId(ctx, v.ID)
+		if nil != err {
+			return res, nil
+		}
+		myCode := userRecommend.RecommendCode + "D" + strconv.FormatInt(v.ID, 10)
+		myRecommendUsers, err = uuc.urRepo.GetUserRecommendByCode(ctx, myCode)
+		if nil == err {
+			// 找直推
+			for _, vMyRecommendUsers := range myRecommendUsers {
+				myRecommendUserIds = append(myRecommendUserIds, vMyRecommendUsers.UserId)
+			}
+		}
+		if 0 < len(myRecommendUserIds) {
+			userAreas, err = uuc.urRepo.GetUserAreas(ctx, myRecommendUserIds)
+			if nil == err {
+				var (
+					tmpTotalAreaAmount int64
+				)
+				for _, vUserAreas := range userAreas {
+					tmpAreaAmount := vUserAreas.Amount + vUserAreas.SelfAmount
+					tmpTotalAreaAmount += tmpAreaAmount
+					if tmpAreaAmount > maxAreaAmount {
+						maxAreaAmount = tmpAreaAmount
+					}
+				}
+
+				areaAmount = tmpTotalAreaAmount - maxAreaAmount
+			}
+		}
+
 		if _, ok := userBalances[v.ID]; !ok {
 			continue
 		}
@@ -842,6 +695,8 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 			BalanceDhb:       fmt.Sprintf("%.2f", float64(userBalances[v.ID].BalanceDhb)/float64(10000000000)),
 			Vip:              userInfos[v.ID].Vip,
 			MonthRecommend:   tmpCount,
+			AreaAmount:       areaAmount,
+			AreaMaxAmount:    maxAreaAmount,
 			HistoryRecommend: userInfos[v.ID].HistoryRecommend,
 		})
 	}
@@ -1904,6 +1759,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 		recommendNeedSix    int64
 		tmpRecommendUserIds []string
 		err                 error
+		locationRowConfig   int64
 	)
 	// 配置
 	configs, _ = uuc.configRepo.GetConfigByKeys(ctx, "recommend_need", "recommend_need_one",
@@ -1934,6 +1790,8 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 				recommendNeedVip4, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			} else if "recommend_need_vip5" == vConfig.KeyName {
 				recommendNeedVip5, _ = strconv.ParseInt(vConfig.Value, 10, 64)
+			} else if "location_row" == vConfig.KeyName {
+				locationRowConfig, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			}
 		}
 	}
@@ -2004,7 +1862,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 			return nil, err
 		}
 		// 占位分红人
-		rewardLocations, err = uuc.locationRepo.GetRewardLocationByRowOrCol(ctx, myLocationLast.Row, myLocationLast.Col)
+		rewardLocations, err = uuc.locationRepo.GetRewardLocationByRowOrCol(ctx, myLocationLast.Row, myLocationLast.Col, locationRowConfig)
 
 		// 推荐人
 		userRecommend, err = uuc.urRepo.GetUserRecommendByUserId(ctx, withdraw.UserId)
@@ -2058,7 +1916,6 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 					}
 
 					tmpCurrentStatus := vRewardLocations.Status // 现在还在运行中
-					tmpCurrent := vRewardLocations.Current
 
 					tmpBalanceAmount := tmpAmount
 					vRewardLocations.Status = "running"
@@ -2077,16 +1934,18 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 						}
 						systemAmount -= tmpBalanceAmount // 占位分红后剩余金额
 
-						if 0 < tmpBalanceAmount && "running" == tmpCurrentStatus && tmpCurrent < vRewardLocations.CurrentMax { // 这次还能分红
-							tmpCurrentAmount := vRewardLocations.CurrentMax - tmpCurrent // 最大可分红额度
-							rewardAmount := tmpBalanceAmount
-							if tmpCurrentAmount < tmpBalanceAmount { // 大于最大可分红额度
-								rewardAmount = tmpCurrentAmount
-							}
-
-							_, err = uuc.ubRepo.WithdrawReward(ctx, vRewardLocations.UserId, rewardAmount, myLocationLast.ID, vRewardLocations.ID, locationType) // 分红信息修改
+						if 0 < tmpBalanceAmount {
+							err = uuc.locationRepo.UpdateLocation(ctx, vRewardLocations.ID, vRewardLocations.Status, tmpBalanceAmount, vRewardLocations.StopDate) // 分红占位数据修改
 							if nil != err {
 								return err
+							}
+							systemAmount -= tmpBalanceAmount // 占位分红后剩余金额
+
+							if 0 < tmpBalanceAmount { // 这次还能分红
+								_, err = uuc.ubRepo.WithdrawReward(ctx, vRewardLocations.UserId, tmpBalanceAmount, myLocationLast.ID, vRewardLocations.ID, locationType, tmpCurrentStatus) // 分红信息修改
+								if nil != err {
+									return err
+								}
 							}
 						}
 					}
@@ -2099,7 +1958,6 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 				myUserRecommendUserLocationLast, err = uuc.locationRepo.GetMyLocationLast(ctx, myUserRecommendUserInfo.UserId)
 				if nil != myUserRecommendUserLocationLast {
 					tmpStatus := myUserRecommendUserLocationLast.Status // 现在还在运行中
-					tmpCurrent := myUserRecommendUserLocationLast.Current
 
 					tmpBalanceAmount := currentValue / 100 * recommendNeed // 记录下一次
 					myUserRecommendUserLocationLast.Status = "running"
@@ -2120,13 +1978,8 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 					}
 					systemAmount -= tmpBalanceAmount // 扣除
 
-					if 0 < tmpBalanceAmount && "running" == tmpStatus && tmpCurrent < myUserRecommendUserLocationLast.CurrentMax { // 这次还能分红
-						tmpCurrentAmount := myUserRecommendUserLocationLast.CurrentMax - tmpCurrent // 最大可分红额度
-						rewardAmount := tmpBalanceAmount
-						if tmpCurrentAmount < tmpBalanceAmount { // 大于最大可分红额度
-							rewardAmount = tmpCurrentAmount
-						}
-						_, err = uuc.ubRepo.NormalWithdrawRecommendReward(ctx, myUserRecommendUserId, rewardAmount, myLocationLast.ID) // 直推人奖励
+					if 0 < tmpBalanceAmount { // 这次还能分红
+						_, err = uuc.ubRepo.NormalWithdrawRecommendReward(ctx, myUserRecommendUserId, tmpBalanceAmount, myLocationLast.ID, tmpStatus) // 直推人奖励
 						if nil != err {
 							return err
 						}
@@ -2161,7 +2014,6 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 					}
 					if 0 < tmpMyRecommendAmount { // 扣除推荐人分红
 						tmpStatus := myUserRecommendUserLocationLast.Status // 现在还在运行中
-						tmpCurrent := myUserRecommendUserLocationLast.Current
 
 						tmpBalanceAmount := tmpMyRecommendAmount // 记录下一次
 						myUserRecommendUserLocationLast.Status = "running"
@@ -2178,14 +2030,9 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 								return err
 							}
 						}
-						systemAmount -= tmpBalanceAmount                                                                               // 扣除                                                                                    // 扣除
-						if 0 < tmpBalanceAmount && "running" == tmpStatus && tmpCurrent < myUserRecommendUserLocationLast.CurrentMax { // 这次还能分红
-							tmpCurrentAmount := myUserRecommendUserLocationLast.CurrentMax - tmpCurrent // 最大可分红额度
-							rewardAmount := tmpBalanceAmount
-							if tmpCurrentAmount < tmpBalanceAmount { // 大于最大可分红额度
-								rewardAmount = tmpCurrentAmount
-							}
-							_, err = uuc.ubRepo.RecommendWithdrawReward(ctx, myUserRecommendUserId, rewardAmount, myLocationLast.ID) // 推荐人奖励
+						systemAmount -= tmpBalanceAmount // 扣除                                                                                    // 扣除
+						if 0 < tmpBalanceAmount {        // 这次还能分红
+							_, err = uuc.ubRepo.RecommendWithdrawReward(ctx, myUserRecommendUserId, tmpBalanceAmount, myLocationLast.ID, tmpStatus) // 推荐人奖励
 							if nil != err {
 								return err
 							}
@@ -2224,7 +2071,6 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 						tmpMyTopUserRecommendUserLocationLast, _ := uuc.locationRepo.GetMyLocationLast(ctx, tmpMyTopUserRecommendUserId)
 						if nil != tmpMyTopUserRecommendUserLocationLast {
 							tmpMyTopUserRecommendUserLocationLastStatus := tmpMyTopUserRecommendUserLocationLast.Status // 现在还在运行中
-							tmpMyTopUserRecommendUserLocationLastCurrent := tmpMyTopUserRecommendUserLocationLast.Current
 
 							tmpMyTopUserRecommendUserLocationLast.Status = "running"
 							tmpMyTopUserRecommendUserLocationLast.Current += tmpMyTopUserRecommendUserLocationLastBalanceAmount
@@ -2242,13 +2088,8 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 							}
 							systemAmount -= tmpMyTopUserRecommendUserLocationLastBalanceAmount // 扣除
 
-							if 0 < tmpMyTopUserRecommendUserLocationLastBalanceAmount && "running" == tmpMyTopUserRecommendUserLocationLastStatus && tmpMyTopUserRecommendUserLocationLastCurrent < tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 这次还能分红
-								tmpCurrentTopAmount := tmpMyTopUserRecommendUserLocationLast.CurrentMax - tmpMyTopUserRecommendUserLocationLastCurrent // 最大可分红额度
-								rewardTopAmount := tmpMyTopUserRecommendUserLocationLastBalanceAmount
-								if tmpCurrentTopAmount < tmpMyTopUserRecommendUserLocationLastBalanceAmount { // 大于最大可分红额度
-									rewardTopAmount = tmpCurrentTopAmount
-								}
-								_, err = uuc.ubRepo.NormalWithdrawRecommendTopReward(ctx, tmpMyTopUserRecommendUserId, rewardTopAmount, myLocationLast.ID, int64(i)) // 直推人奖励
+							if 0 < tmpMyTopUserRecommendUserLocationLastBalanceAmount { // 这次还能分红
+								_, err = uuc.ubRepo.NormalWithdrawRecommendTopReward(ctx, tmpMyTopUserRecommendUserId, tmpMyTopUserRecommendUserLocationLastBalanceAmount, myLocationLast.ID, int64(i), tmpMyTopUserRecommendUserLocationLastStatus) // 直推人奖励
 								if nil != err {
 									return err
 								}
@@ -2308,7 +2149,6 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 						fmt.Println(tmpMyRecommendAmount)
 						if 0 < tmpMyRecommendAmount { // 扣除推荐人分红
 							tmpStatus := tmpMyTopUserRecommendUserLocationLast.Status // 现在还在运行中
-							tmpCurrent := tmpMyTopUserRecommendUserLocationLast.Current
 
 							tmpBalanceAmount := tmpMyRecommendAmount // 记录下一次
 							tmpMyTopUserRecommendUserLocationLast.Status = "running"
@@ -2325,14 +2165,9 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 									return err
 								}
 							}
-							systemAmount -= tmpBalanceAmount                                                                                     // 扣除
-							if 0 < tmpBalanceAmount && "running" == tmpStatus && tmpCurrent < tmpMyTopUserRecommendUserLocationLast.CurrentMax { // 这次还能分红
-								tmpCurrentAmount := tmpMyTopUserRecommendUserLocationLast.CurrentMax - tmpCurrent // 最大可分红额度
-								rewardAmount := tmpBalanceAmount
-								if tmpCurrentAmount < tmpBalanceAmount { // 大于最大可分红额度
-									rewardAmount = tmpCurrentAmount
-								}
-								_, err = uuc.ubRepo.RecommendWithdrawTopReward(ctx, tmpMyTopUserRecommendUserId, rewardAmount, myLocationLast.ID, recommendLevel) // 推荐人奖励
+							systemAmount -= tmpBalanceAmount // 扣除
+							if 0 < tmpBalanceAmount {        // 这次还能分红
+								_, err = uuc.ubRepo.RecommendWithdrawTopReward(ctx, tmpMyTopUserRecommendUserId, tmpBalanceAmount, myLocationLast.ID, recommendLevel, tmpStatus) // 推荐人奖励
 								if nil != err {
 									return err
 								}
@@ -2387,20 +2222,16 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.AdminDailyRecommendRewardRequest) (*v1.AdminDailyRecommendRewardReply, error) {
 
 	var (
-		users                  []*User
-		userLocations          []*Location
-		configs                []*Config
-		recommendAreaOne       int64
-		recommendAreaOneRate   int64
-		recommendAreaTwo       int64
-		recommendAreaTwoRate   int64
-		recommendAreaThree     int64
-		recommendAreaThreeRate int64
-		recommendAreaFour      int64
-		recommendAreaFourRate  int64
-		fee                    int64
-		day                    = -1
-		err                    error
+		users                []*User
+		userLocations        []*Location
+		configs              []*Config
+		recommendAreaOne     int64
+		recommendAreaOneRate int64
+		recommendAreaTwo     int64
+		recommendAreaTwoRate int64
+		fee                  int64
+		day                  = -1
+		err                  error
 	)
 
 	if 1 == req.Day {
@@ -2420,8 +2251,8 @@ func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.A
 	}
 
 	configs, _ = uuc.configRepo.GetConfigByKeys(ctx, "recommend_area_one",
-		"recommend_area_one_rate", "recommend_area_two_rate", "recommend_area_three_rate", "recommend_area_four_rate",
-		"recommend_area_two", "recommend_area_three", "recommend_area_four")
+		"recommend_area_one_rate", "recommend_area_two_rate",
+		"recommend_area_two")
 	if nil != configs {
 		for _, vConfig := range configs {
 			if "recommend_area_one" == vConfig.KeyName {
@@ -2432,14 +2263,6 @@ func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.A
 				recommendAreaTwo, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			} else if "recommend_area_two_rate" == vConfig.KeyName {
 				recommendAreaTwoRate, _ = strconv.ParseInt(vConfig.Value, 10, 64)
-			} else if "recommend_area_three" == vConfig.KeyName {
-				recommendAreaThree, _ = strconv.ParseInt(vConfig.Value, 10, 64)
-			} else if "recommend_area_three_rate" == vConfig.KeyName {
-				recommendAreaThreeRate, _ = strconv.ParseInt(vConfig.Value, 10, 64)
-			} else if "recommend_area_four" == vConfig.KeyName {
-				recommendAreaFour, _ = strconv.ParseInt(vConfig.Value, 10, 64)
-			} else if "recommend_area_four_rate" == vConfig.KeyName {
-				recommendAreaFourRate, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			}
 		}
 	}
@@ -2451,8 +2274,6 @@ func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.A
 
 	level1 := make(map[int64]int64, 0)
 	level2 := make(map[int64]int64, 0)
-	level3 := make(map[int64]int64, 0)
-	level4 := make(map[int64]int64, 0)
 
 	for _, user := range users {
 		var userArea *UserArea
@@ -2467,12 +2288,6 @@ func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.A
 			}
 			if userArea.Level >= 2 {
 				level2[user.ID] = user.ID
-			}
-			if userArea.Level >= 3 {
-				level3[user.ID] = user.ID
-			}
-			if userArea.Level >= 4 {
-				level4[user.ID] = user.ID
 			}
 			continue
 		}
@@ -2526,15 +2341,8 @@ func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.A
 			level2[user.ID] = user.ID
 		}
 
-		if areaAmount >= recommendAreaThree {
-			level3[user.ID] = user.ID
-		}
-
-		if areaAmount >= recommendAreaFour {
-			level4[user.ID] = user.ID
-		}
 	}
-	fmt.Println(level4, level3, level2, level1)
+	fmt.Println(level2, level1)
 	// 分红
 	fee /= 100000
 	fmt.Println(fee)
@@ -2613,96 +2421,6 @@ func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.A
 
 					if 0 < tmpBalanceAmount { // 这次还能分红
 						_, err = uuc.ubRepo.UserDailyRecommendArea(ctx, vLevel2, tmpBalanceAmount, tmpCurrentStatus)
-						if nil != err {
-							return err
-						}
-					}
-				}
-
-				return nil
-			}); nil != err {
-				continue
-			}
-		}
-	}
-
-	// 分红
-	if 0 < len(level3) {
-		feeLevel3 := fee * recommendAreaThreeRate / 100 / int64(len(level3))
-		feeLevel3 *= 100000
-		for _, vLevel3 := range level3 {
-			if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
-				var myLocationLast *Location
-				// 获取当前用户的占位信息，已经有运行中的跳过
-				myLocationLast, err = uuc.locationRepo.GetMyLocationLast(ctx, vLevel3)
-				if nil == myLocationLast { // 无占位信息
-					return err
-				}
-
-				tmpCurrentStatus := myLocationLast.Status // 现在还在运行中
-				tmpBalanceAmount := feeLevel3
-				myLocationLast.Status = "running"
-				myLocationLast.Current += feeLevel3
-				if myLocationLast.Current >= myLocationLast.CurrentMax { // 占位分红人分满停止
-					if "running" == tmpCurrentStatus {
-						myLocationLast.StopDate = time.Now().UTC().Add(8 * time.Hour)
-					}
-					myLocationLast.Status = "stop"
-				}
-
-				if 0 < tmpBalanceAmount {
-					err = uuc.locationRepo.UpdateLocation(ctx, myLocationLast.ID, myLocationLast.Status, tmpBalanceAmount, myLocationLast.StopDate) // 分红占位数据修改
-					if nil != err {
-						return err
-					}
-
-					if 0 < tmpBalanceAmount { // 这次还能分红
-						_, err = uuc.ubRepo.UserDailyRecommendArea(ctx, vLevel3, tmpBalanceAmount, tmpCurrentStatus)
-						if nil != err {
-							return err
-						}
-					}
-				}
-
-				return nil
-			}); nil != err {
-				continue
-			}
-		}
-	}
-
-	// 分红
-	if 0 < len(level4) {
-		feeLevel4 := fee * recommendAreaFourRate / 100 / int64(len(level4))
-		feeLevel4 *= 100000
-		for _, vLevel4 := range level4 {
-			if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
-				var myLocationLast *Location
-				// 获取当前用户的占位信息，已经有运行中的跳过
-				myLocationLast, err = uuc.locationRepo.GetMyLocationLast(ctx, vLevel4)
-				if nil == myLocationLast { // 无占位信息
-					return err
-				}
-
-				tmpCurrentStatus := myLocationLast.Status // 现在还在运行中
-				tmpBalanceAmount := feeLevel4
-				myLocationLast.Status = "running"
-				myLocationLast.Current += feeLevel4
-				if myLocationLast.Current >= myLocationLast.CurrentMax { // 占位分红人分满停止
-					if "running" == tmpCurrentStatus {
-						myLocationLast.StopDate = time.Now().UTC().Add(8 * time.Hour)
-					}
-					myLocationLast.Status = "stop"
-				}
-
-				if 0 < tmpBalanceAmount {
-					err = uuc.locationRepo.UpdateLocation(ctx, myLocationLast.ID, myLocationLast.Status, tmpBalanceAmount, myLocationLast.StopDate) // 分红占位数据修改
-					if nil != err {
-						return err
-					}
-
-					if 0 < tmpBalanceAmount { // 这次还能分红
-						_, err = uuc.ubRepo.UserDailyRecommendArea(ctx, vLevel4, tmpBalanceAmount, tmpCurrentStatus)
 						if nil != err {
 							return err
 						}
@@ -2799,4 +2517,19 @@ func (uuc *UserUseCase) CheckAdminUserArea(ctx context.Context, req *v1.CheckAdm
 	}
 
 	return &v1.CheckAdminUserAreaReply{}, nil
+}
+
+func (uuc *UserUseCase) AdminAreaLevelUpdate(ctx context.Context, req *v1.AdminAreaLevelUpdateRequest) (*v1.AdminAreaLevelUpdateReply, error) {
+	var (
+		err error
+	)
+
+	res := &v1.AdminAreaLevelUpdateReply{}
+
+	_, err = uuc.urRepo.UpdateUserAreaLevel(ctx, req.SendBody.UserId, req.SendBody.Level)
+	if nil != err {
+		return res, err
+	}
+
+	return res, nil
 }

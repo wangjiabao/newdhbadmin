@@ -510,6 +510,10 @@ func (a *AppService) AdminLocationInsert(ctx context.Context, req *v1.AdminLocat
 	return &v1.AdminLocationInsertReply{}, nil
 }
 
+func (a *AppService) AdminAreaLevelUpdate(ctx context.Context, req *v1.AdminAreaLevelUpdateRequest) (*v1.AdminAreaLevelUpdateReply, error) {
+	return a.uuc.AdminAreaLevelUpdate(ctx, req)
+}
+
 func (a *AppService) AdminBalanceUpdate(ctx context.Context, req *v1.AdminBalanceUpdateRequest) (*v1.AdminBalanceUpdateReply, error) {
 	return a.uuc.AdminBalanceUpdate(ctx, req)
 }

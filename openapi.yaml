@@ -335,6 +335,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/admin_dhb/level_update:
+        post:
+            tags:
+                - App
+            operationId: App_AdminAreaLevelUpdate
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AdminAreaLevelUpdateRequest_SendBody'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AdminAreaLevelUpdateReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/admin_dhb/location_all_list:
         get:
             tags:
@@ -861,6 +885,18 @@ components:
                     type: string
                 allSystemRewardAndFee:
                     type: string
+        AdminAreaLevelUpdateReply:
+            type: object
+            properties: {}
+        AdminAreaLevelUpdateRequest_SendBody:
+            type: object
+            properties:
+                userId:
+                    type: integer
+                    format: int64
+                level:
+                    type: integer
+                    format: int64
         AdminBalanceUpdateReply:
             type: object
             properties: {}
@@ -1111,6 +1147,12 @@ components:
                     type: integer
                     format: int64
                 historyRecommend:
+                    type: integer
+                    format: int64
+                areaAmount:
+                    type: integer
+                    format: int64
+                areaMaxAmount:
                     type: integer
                     format: int64
         AdminUserRecommendReply:

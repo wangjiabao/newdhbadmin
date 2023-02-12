@@ -958,12 +958,14 @@ func (ub UserBalanceRepo) GetUserBalance(ctx context.Context, userId int64) (*bi
 }
 
 // LocationReward .
-func (ub *UserBalanceRepo) LocationReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string) (int64, error) {
+func (ub *UserBalanceRepo) LocationReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string, status string) (int64, error) {
 	var err error
-	if err = ub.data.DB(ctx).Table("user_balance").
-		Where("user_id=?", userId).
-		Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
-		return 0, errors.NotFound("user balance err", "user balance not found")
+	if "running" == status {
+		if err = ub.data.DB(ctx).Table("user_balance").
+			Where("user_id=?", userId).
+			Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
+			return 0, errors.NotFound("user balance err", "user balance not found")
+		}
 	}
 
 	var userBalance UserBalance
@@ -1000,12 +1002,15 @@ func (ub *UserBalanceRepo) LocationReward(ctx context.Context, userId int64, amo
 }
 
 // WithdrawReward .
-func (ub *UserBalanceRepo) WithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string) (int64, error) {
+func (ub *UserBalanceRepo) WithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string, status string) (int64, error) {
 	var err error
-	if err = ub.data.DB(ctx).Table("user_balance").
-		Where("user_id=?", userId).
-		Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
-		return 0, errors.NotFound("user balance err", "user balance not found")
+	if "running" == status {
+		if err = ub.data.DB(ctx).Table("user_balance").
+			Where("user_id=?", userId).
+			Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
+			return 0, errors.NotFound("user balance err", "user balance not found")
+		}
+
 	}
 
 	var userBalance UserBalance
@@ -1435,12 +1440,14 @@ func (ub *UserBalanceRepo) GetWithdrawPassOrRewardedFirst(ctx context.Context) (
 }
 
 // RecommendReward .
-func (ub *UserBalanceRepo) RecommendReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error) {
+func (ub *UserBalanceRepo) RecommendReward(ctx context.Context, userId int64, amount int64, locationId int64, status string) (int64, error) {
 	var err error
-	if err = ub.data.DB(ctx).Table("user_balance").
-		Where("user_id=?", userId).
-		Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
-		return 0, errors.NotFound("user balance err", "user balance not found")
+	if "running" == status {
+		if err = ub.data.DB(ctx).Table("user_balance").
+			Where("user_id=?", userId).
+			Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
+			return 0, errors.NotFound("user balance err", "user balance not found")
+		}
 	}
 
 	var userBalance UserBalance
@@ -1475,12 +1482,14 @@ func (ub *UserBalanceRepo) RecommendReward(ctx context.Context, userId int64, am
 }
 
 // RecommendTopReward .
-func (ub *UserBalanceRepo) RecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64) (int64, error) {
+func (ub *UserBalanceRepo) RecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64, status string) (int64, error) {
 	var err error
-	if err = ub.data.DB(ctx).Table("user_balance").
-		Where("user_id=?", userId).
-		Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
-		return 0, errors.NotFound("user balance err", "user balance not found")
+	if "running" == status {
+		if err = ub.data.DB(ctx).Table("user_balance").
+			Where("user_id=?", userId).
+			Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
+			return 0, errors.NotFound("user balance err", "user balance not found")
+		}
 	}
 
 	var userBalance UserBalance
@@ -1737,12 +1746,14 @@ func (ub *UserBalanceRepo) UserDailyFee(ctx context.Context, userId int64, amoun
 }
 
 // RecommendWithdrawReward .
-func (ub *UserBalanceRepo) RecommendWithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error) {
+func (ub *UserBalanceRepo) RecommendWithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64, status string) (int64, error) {
 	var err error
-	if err = ub.data.DB(ctx).Table("user_balance").
-		Where("user_id=?", userId).
-		Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
-		return 0, errors.NotFound("user balance err", "user balance not found")
+	if "running" == status {
+		if err = ub.data.DB(ctx).Table("user_balance").
+			Where("user_id=?", userId).
+			Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
+			return 0, errors.NotFound("user balance err", "user balance not found")
+		}
 	}
 
 	var userBalance UserBalance
@@ -1777,12 +1788,15 @@ func (ub *UserBalanceRepo) RecommendWithdrawReward(ctx context.Context, userId i
 }
 
 // RecommendWithdrawTopReward .
-func (ub *UserBalanceRepo) RecommendWithdrawTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64) (int64, error) {
+func (ub *UserBalanceRepo) RecommendWithdrawTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64, status string) (int64, error) {
 	var err error
-	if err = ub.data.DB(ctx).Table("user_balance").
-		Where("user_id=?", userId).
-		Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
-		return 0, errors.NotFound("user balance err", "user balance not found")
+	if "running" == status {
+		if err = ub.data.DB(ctx).Table("user_balance").
+			Where("user_id=?", userId).
+			Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
+			return 0, errors.NotFound("user balance err", "user balance not found")
+		}
+
 	}
 
 	var userBalance UserBalance
@@ -1818,12 +1832,14 @@ func (ub *UserBalanceRepo) RecommendWithdrawTopReward(ctx context.Context, userI
 }
 
 // NormalRecommendTopReward .
-func (ub *UserBalanceRepo) NormalRecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, reasonId int64) (int64, error) {
+func (ub *UserBalanceRepo) NormalRecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, reasonId int64, status string) (int64, error) {
 	var err error
-	if err = ub.data.DB(ctx).Table("user_balance").
-		Where("user_id=?", userId).
-		Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
-		return 0, errors.NotFound("user balance err", "user balance not found")
+	if "running" == status {
+		if err = ub.data.DB(ctx).Table("user_balance").
+			Where("user_id=?", userId).
+			Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
+			return 0, errors.NotFound("user balance err", "user balance not found")
+		}
 	}
 
 	var userBalance UserBalance
@@ -1859,12 +1875,14 @@ func (ub *UserBalanceRepo) NormalRecommendTopReward(ctx context.Context, userId 
 }
 
 // NormalRecommendReward .
-func (ub *UserBalanceRepo) NormalRecommendReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error) {
+func (ub *UserBalanceRepo) NormalRecommendReward(ctx context.Context, userId int64, amount int64, locationId int64, status string) (int64, error) {
 	var err error
-	if err = ub.data.DB(ctx).Table("user_balance").
-		Where("user_id=?", userId).
-		Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
-		return 0, errors.NotFound("user balance err", "user balance not found")
+	if "running" == status {
+		if err = ub.data.DB(ctx).Table("user_balance").
+			Where("user_id=?", userId).
+			Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
+			return 0, errors.NotFound("user balance err", "user balance not found")
+		}
 	}
 
 	var userBalance UserBalance
@@ -1899,12 +1917,14 @@ func (ub *UserBalanceRepo) NormalRecommendReward(ctx context.Context, userId int
 }
 
 // NormalWithdrawRecommendReward .
-func (ub *UserBalanceRepo) NormalWithdrawRecommendReward(ctx context.Context, userId int64, amount int64, locationId int64) (int64, error) {
+func (ub *UserBalanceRepo) NormalWithdrawRecommendReward(ctx context.Context, userId int64, amount int64, locationId int64, status string) (int64, error) {
 	var err error
-	if err = ub.data.DB(ctx).Table("user_balance").
-		Where("user_id=?", userId).
-		Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
-		return 0, errors.NotFound("user balance err", "user balance not found")
+	if "running" == status {
+		if err = ub.data.DB(ctx).Table("user_balance").
+			Where("user_id=?", userId).
+			Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
+			return 0, errors.NotFound("user balance err", "user balance not found")
+		}
 	}
 
 	var userBalance UserBalance
@@ -1939,12 +1959,14 @@ func (ub *UserBalanceRepo) NormalWithdrawRecommendReward(ctx context.Context, us
 }
 
 // NormalWithdrawRecommendTopReward .
-func (ub *UserBalanceRepo) NormalWithdrawRecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, reasonId int64) (int64, error) {
+func (ub *UserBalanceRepo) NormalWithdrawRecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, reasonId int64, status string) (int64, error) {
 	var err error
-	if err = ub.data.DB(ctx).Table("user_balance").
-		Where("user_id=?", userId).
-		Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
-		return 0, errors.NotFound("user balance err", "user balance not found")
+	if "running" == status {
+		if err = ub.data.DB(ctx).Table("user_balance").
+			Where("user_id=?", userId).
+			Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
+			return 0, errors.NotFound("user balance err", "user balance not found")
+		}
 	}
 
 	var userBalance UserBalance

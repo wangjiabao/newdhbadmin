@@ -58,6 +58,7 @@ type AppClient interface {
 	AuthAdminDelete(ctx context.Context, in *AuthAdminDeleteRequest, opts ...grpc.CallOption) (*AuthAdminDeleteReply, error)
 	AdminDailyRecommendReward(ctx context.Context, in *AdminDailyRecommendRewardRequest, opts ...grpc.CallOption) (*AdminDailyRecommendRewardReply, error)
 	CheckAdminUserArea(ctx context.Context, in *CheckAdminUserAreaRequest, opts ...grpc.CallOption) (*CheckAdminUserAreaReply, error)
+	AdminAreaLevelUpdate(ctx context.Context, in *AdminAreaLevelUpdateRequest, opts ...grpc.CallOption) (*AdminAreaLevelUpdateReply, error)
 }
 
 type appClient struct {
@@ -392,6 +393,15 @@ func (c *appClient) CheckAdminUserArea(ctx context.Context, in *CheckAdminUserAr
 	return out, nil
 }
 
+func (c *appClient) AdminAreaLevelUpdate(ctx context.Context, in *AdminAreaLevelUpdateRequest, opts ...grpc.CallOption) (*AdminAreaLevelUpdateReply, error) {
+	out := new(AdminAreaLevelUpdateReply)
+	err := c.cc.Invoke(ctx, "/api.App/AdminAreaLevelUpdate", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AppServer is the server API for App service.
 // All implementations must embed UnimplementedAppServer
 // for forward compatibility
@@ -432,6 +442,7 @@ type AppServer interface {
 	AuthAdminDelete(context.Context, *AuthAdminDeleteRequest) (*AuthAdminDeleteReply, error)
 	AdminDailyRecommendReward(context.Context, *AdminDailyRecommendRewardRequest) (*AdminDailyRecommendRewardReply, error)
 	CheckAdminUserArea(context.Context, *CheckAdminUserAreaRequest) (*CheckAdminUserAreaReply, error)
+	AdminAreaLevelUpdate(context.Context, *AdminAreaLevelUpdateRequest) (*AdminAreaLevelUpdateReply, error)
 	mustEmbedUnimplementedAppServer()
 }
 
@@ -546,6 +557,9 @@ func (UnimplementedAppServer) AdminDailyRecommendReward(context.Context, *AdminD
 }
 func (UnimplementedAppServer) CheckAdminUserArea(context.Context, *CheckAdminUserAreaRequest) (*CheckAdminUserAreaReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckAdminUserArea not implemented")
+}
+func (UnimplementedAppServer) AdminAreaLevelUpdate(context.Context, *AdminAreaLevelUpdateRequest) (*AdminAreaLevelUpdateReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminAreaLevelUpdate not implemented")
 }
 func (UnimplementedAppServer) mustEmbedUnimplementedAppServer() {}
 
@@ -1208,6 +1222,24 @@ func _App_CheckAdminUserArea_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_AdminAreaLevelUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminAreaLevelUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminAreaLevelUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.App/AdminAreaLevelUpdate",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminAreaLevelUpdate(ctx, req.(*AdminAreaLevelUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // App_ServiceDesc is the grpc.ServiceDesc for App service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1358,6 +1390,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckAdminUserArea",
 			Handler:    _App_CheckAdminUserArea_Handler,
+		},
+		{
+			MethodName: "AdminAreaLevelUpdate",
+			Handler:    _App_AdminAreaLevelUpdate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
