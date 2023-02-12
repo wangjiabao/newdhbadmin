@@ -1744,42 +1744,30 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 		withdrawAmount                  int64
 		stopLocations                   []*Location
 		//lock                            bool
-		withdrawNotDeal     []*Withdraw
-		configs             []*Config
-		recommendNeed       int64
-		recommendNeedVip1   int64
-		recommendNeedVip2   int64
-		recommendNeedVip3   int64
-		recommendNeedVip4   int64
-		recommendNeedVip5   int64
-		recommendNeedTwo    int64
-		recommendNeedThree  int64
-		recommendNeedFour   int64
-		recommendNeedFive   int64
-		recommendNeedSix    int64
-		tmpRecommendUserIds []string
-		err                 error
-		locationRowConfig   int64
+		withdrawNotDeal             []*Withdraw
+		configs                     []*Config
+		recommendNeedVip1           int64
+		recommendNeedVip2           int64
+		recommendNeedVip3           int64
+		recommendNeedVip4           int64
+		recommendNeedVip5           int64
+		recommendNeedOneToTen       int64
+		recommendNeedElevenToTwenty int64
+		tmpRecommendUserIds         []string
+		err                         error
+		locationRowConfig           int64
 	)
 	// 配置
 	configs, _ = uuc.configRepo.GetConfigByKeys(ctx, "recommend_need", "recommend_need_one",
 		"recommend_need_two", "recommend_need_three", "recommend_need_four", "recommend_need_five", "recommend_need_six",
 		"recommend_need_vip1", "recommend_need_vip2",
-		"recommend_need_vip3", "recommend_need_vip4", "recommend_need_vip5", "time_again")
+		"recommend_need_vip3", "recommend_need_vip4", "recommend_need_vip5", "time_again", "recommend_need_eleven_to_twenty", "recommend_need_one_to_ten")
 	if nil != configs {
 		for _, vConfig := range configs {
-			if "recommend_need" == vConfig.KeyName {
-				recommendNeed, _ = strconv.ParseInt(vConfig.Value, 10, 64)
-			} else if "recommend_need_two" == vConfig.KeyName {
-				recommendNeedTwo, _ = strconv.ParseInt(vConfig.Value, 10, 64)
-			} else if "recommend_need_three" == vConfig.KeyName {
-				recommendNeedThree, _ = strconv.ParseInt(vConfig.Value, 10, 64)
-			} else if "recommend_need_four" == vConfig.KeyName {
-				recommendNeedFour, _ = strconv.ParseInt(vConfig.Value, 10, 64)
-			} else if "recommend_need_five" == vConfig.KeyName {
-				recommendNeedFive, _ = strconv.ParseInt(vConfig.Value, 10, 64)
-			} else if "recommend_need_six" == vConfig.KeyName {
-				recommendNeedSix, _ = strconv.ParseInt(vConfig.Value, 10, 64)
+			if "recommend_need_one_to_ten" == vConfig.KeyName {
+				recommendNeedOneToTen, _ = strconv.ParseInt(vConfig.Value, 10, 64)
+			} else if "recommend_need_eleven_to_twenty" == vConfig.KeyName {
+				recommendNeedElevenToTwenty, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			} else if "recommend_need_vip1" == vConfig.KeyName {
 				recommendNeedVip1, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			} else if "recommend_need_vip2" == vConfig.KeyName {
@@ -1959,7 +1947,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 				if nil != myUserRecommendUserLocationLast {
 					tmpStatus := myUserRecommendUserLocationLast.Status // 现在还在运行中
 
-					tmpBalanceAmount := currentValue / 100 * recommendNeed // 记录下一次
+					tmpBalanceAmount := currentValue / 100 * recommendNeedOneToTen // 记录下一次
 					myUserRecommendUserLocationLast.Status = "running"
 					myUserRecommendUserLocationLast.Current += tmpBalanceAmount
 					if myUserRecommendUserLocationLast.Current >= myUserRecommendUserLocationLast.CurrentMax { // 占位分红人分满停止
@@ -2045,7 +2033,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 
 				if 2 <= len(tmpRecommendUserIds) {
 					fmt.Println(tmpRecommendUserIds)
-					lasAmount := currentValue / 100 * recommendNeed
+					lasAmount := currentValue / 100 * recommendNeedOneToTen
 					for i := 2; i <= 6; i++ {
 						// 有占位信息，推荐人推荐人的上一代
 						if len(tmpRecommendUserIds)-i < 1 { // 根据数据第一位是空字符串
@@ -2054,16 +2042,10 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 						tmpMyTopUserRecommendUserId, _ := strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-i], 10, 64) // 最后一位是直推人
 
 						var tmpMyTopUserRecommendUserLocationLastBalanceAmount int64
-						if i == 2 {
-							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedTwo // 记录下一次
-						} else if i == 3 {
-							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedThree // 记录下一次
-						} else if i == 4 {
-							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedFour // 记录下一次
-						} else if i == 5 {
-							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedFive // 记录下一次
-						} else if i == 6 {
-							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedSix // 记录下一次
+						if i <= 10 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedOneToTen // 记录下一次
+						} else if i <= 20 && i > 10 {
+							tmpMyTopUserRecommendUserLocationLastBalanceAmount = lasAmount / 100 * recommendNeedElevenToTwenty // 记录下一次
 						} else {
 							break
 						}
