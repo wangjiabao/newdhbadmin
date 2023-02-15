@@ -283,6 +283,9 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 		}
 
 		if err = ruc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+			if 3 == locationCol { // 第三个位置
+				locationCurrent += currentValue / 100 * 5
+			}
 			currentLocation, err = ruc.locationRepo.CreateLocation(ctx, &Location{ // 占位
 				UserId:       v.UserId,
 				Status:       "running",
@@ -610,6 +613,15 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 					if nil != err {
 						return err
 					}
+				}
+			}
+
+			// 扣除分红给自己
+			if 3 == locationCol {
+				amount -= currentValue / 100 * 5                                                                                                         // 扣除
+				_, err = ruc.userBalanceRepo.LocationReward(ctx, v.UserId, currentValue/100*5, currentLocation.ID, currentLocation.ID, "col", "running") // 分红信息修改
+				if nil != err {
+					return err
 				}
 			}
 
