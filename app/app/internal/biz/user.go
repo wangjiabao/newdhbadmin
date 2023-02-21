@@ -1906,7 +1906,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 					var locationType string
 					var tmpAmount int64
 					if myLocationLast.Row == vRewardLocations.Row { // 同行的人
-						tmpAmount = currentValue / 100 * 5
+						tmpAmount = vRewardLocations.CurrentMax / 5 / 100 * 5
 						locationType = "row"
 					} else if myLocationLast.Col == vRewardLocations.Col { // 同列的人
 						tmpAmount = currentValue / 100
