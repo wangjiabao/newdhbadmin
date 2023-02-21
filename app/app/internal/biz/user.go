@@ -2207,16 +2207,20 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.AdminDailyRecommendRewardRequest) (*v1.AdminDailyRecommendRewardReply, error) {
 
 	var (
-		users                []*User
-		userLocations        []*Location
-		configs              []*Config
-		recommendAreaOne     int64
-		recommendAreaOneRate int64
-		recommendAreaTwo     int64
-		recommendAreaTwoRate int64
-		fee                  int64
-		day                  = -1
-		err                  error
+		users                  []*User
+		userLocations          []*Location
+		configs                []*Config
+		recommendAreaOne       int64
+		recommendAreaOneRate   int64
+		recommendAreaTwo       int64
+		recommendAreaTwoRate   int64
+		recommendAreaThree     int64
+		recommendAreaThreeRate int64
+		recommendAreaFour      int64
+		recommendAreaFourRate  int64
+		fee                    int64
+		day                    = -1
+		err                    error
 	)
 
 	if 1 == req.Day {
@@ -2236,8 +2240,8 @@ func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.A
 	}
 
 	configs, _ = uuc.configRepo.GetConfigByKeys(ctx, "recommend_area_one",
-		"recommend_area_one_rate", "recommend_area_two_rate",
-		"recommend_area_two")
+		"recommend_area_one_rate", "recommend_area_two_rate", "recommend_area_three_rate", "recommend_area_four_rate",
+		"recommend_area_two", "recommend_area_three", "recommend_area_four")
 	if nil != configs {
 		for _, vConfig := range configs {
 			if "recommend_area_one" == vConfig.KeyName {
@@ -2248,6 +2252,14 @@ func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.A
 				recommendAreaTwo, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			} else if "recommend_area_two_rate" == vConfig.KeyName {
 				recommendAreaTwoRate, _ = strconv.ParseInt(vConfig.Value, 10, 64)
+			} else if "recommend_area_three" == vConfig.KeyName {
+				recommendAreaThree, _ = strconv.ParseInt(vConfig.Value, 10, 64)
+			} else if "recommend_area_three_rate" == vConfig.KeyName {
+				recommendAreaThreeRate, _ = strconv.ParseInt(vConfig.Value, 10, 64)
+			} else if "recommend_area_four" == vConfig.KeyName {
+				recommendAreaFour, _ = strconv.ParseInt(vConfig.Value, 10, 64)
+			} else if "recommend_area_four_rate" == vConfig.KeyName {
+				recommendAreaFourRate, _ = strconv.ParseInt(vConfig.Value, 10, 64)
 			}
 		}
 	}
@@ -2259,6 +2271,8 @@ func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.A
 
 	level1 := make(map[int64]int64, 0)
 	level2 := make(map[int64]int64, 0)
+	level3 := make(map[int64]int64, 0)
+	level4 := make(map[int64]int64, 0)
 
 	for _, user := range users {
 		var userArea *UserArea
@@ -2273,6 +2287,12 @@ func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.A
 			}
 			if userArea.Level >= 2 {
 				level2[user.ID] = user.ID
+			}
+			if userArea.Level >= 3 {
+				level3[user.ID] = user.ID
+			}
+			if userArea.Level >= 4 {
+				level4[user.ID] = user.ID
 			}
 			continue
 		}
@@ -2326,8 +2346,15 @@ func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.A
 			level2[user.ID] = user.ID
 		}
 
+		if areaAmount >= recommendAreaThree {
+			level3[user.ID] = user.ID
+		}
+
+		if areaAmount >= recommendAreaFour {
+			level4[user.ID] = user.ID
+		}
 	}
-	fmt.Println(level2, level1)
+	fmt.Println(level4, level3, level2, level1)
 	// 分红
 	fee /= 100000
 	fmt.Println(fee)
@@ -2406,6 +2433,96 @@ func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.A
 
 					if 0 < tmpBalanceAmount { // 这次还能分红
 						_, err = uuc.ubRepo.UserDailyRecommendArea(ctx, vLevel2, tmpBalanceAmount, tmpCurrentStatus)
+						if nil != err {
+							return err
+						}
+					}
+				}
+
+				return nil
+			}); nil != err {
+				continue
+			}
+		}
+	}
+
+	// 分红
+	if 0 < len(level3) {
+		feeLevel3 := fee * recommendAreaThreeRate / 100 / int64(len(level3))
+		feeLevel3 *= 100000
+		for _, vLevel3 := range level3 {
+			if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+				var myLocationLast *Location
+				// 获取当前用户的占位信息，已经有运行中的跳过
+				myLocationLast, err = uuc.locationRepo.GetMyLocationLast(ctx, vLevel3)
+				if nil == myLocationLast { // 无占位信息
+					return err
+				}
+
+				tmpCurrentStatus := myLocationLast.Status // 现在还在运行中
+				tmpBalanceAmount := feeLevel3
+				myLocationLast.Status = "running"
+				myLocationLast.Current += feeLevel3
+				if myLocationLast.Current >= myLocationLast.CurrentMax { // 占位分红人分满停止
+					if "running" == tmpCurrentStatus {
+						myLocationLast.StopDate = time.Now().UTC().Add(8 * time.Hour)
+					}
+					myLocationLast.Status = "stop"
+				}
+
+				if 0 < tmpBalanceAmount {
+					err = uuc.locationRepo.UpdateLocation(ctx, myLocationLast.ID, myLocationLast.Status, tmpBalanceAmount, myLocationLast.StopDate) // 分红占位数据修改
+					if nil != err {
+						return err
+					}
+
+					if 0 < tmpBalanceAmount { // 这次还能分红
+						_, err = uuc.ubRepo.UserDailyRecommendArea(ctx, vLevel3, tmpBalanceAmount, tmpCurrentStatus)
+						if nil != err {
+							return err
+						}
+					}
+				}
+
+				return nil
+			}); nil != err {
+				continue
+			}
+		}
+	}
+
+	// 分红
+	if 0 < len(level4) {
+		feeLevel4 := fee * recommendAreaFourRate / 100 / int64(len(level4))
+		feeLevel4 *= 100000
+		for _, vLevel4 := range level4 {
+			if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+				var myLocationLast *Location
+				// 获取当前用户的占位信息，已经有运行中的跳过
+				myLocationLast, err = uuc.locationRepo.GetMyLocationLast(ctx, vLevel4)
+				if nil == myLocationLast { // 无占位信息
+					return err
+				}
+
+				tmpCurrentStatus := myLocationLast.Status // 现在还在运行中
+				tmpBalanceAmount := feeLevel4
+				myLocationLast.Status = "running"
+				myLocationLast.Current += feeLevel4
+				if myLocationLast.Current >= myLocationLast.CurrentMax { // 占位分红人分满停止
+					if "running" == tmpCurrentStatus {
+						myLocationLast.StopDate = time.Now().UTC().Add(8 * time.Hour)
+					}
+					myLocationLast.Status = "stop"
+				}
+
+				if 0 < tmpBalanceAmount {
+					err = uuc.locationRepo.UpdateLocation(ctx, myLocationLast.ID, myLocationLast.Status, tmpBalanceAmount, myLocationLast.StopDate) // 分红占位数据修改
+					if nil != err {
+						return err
+					}
+
+					if 0 < tmpBalanceAmount { // 这次还能分红
+						_, err = uuc.ubRepo.UserDailyRecommendArea(ctx, vLevel4, tmpBalanceAmount, tmpCurrentStatus)
 						if nil != err {
 							return err
 						}
