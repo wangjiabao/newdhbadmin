@@ -268,6 +268,38 @@ func (lr *LocationRepo) GetLocationsByUserId(ctx context.Context, userId int64) 
 	return res, nil
 }
 
+// GetRunningLocations .
+func (lr *LocationRepo) GetRunningLocations(ctx context.Context) ([]*biz.Location, error) {
+	var locations []*Location
+	res := make([]*biz.Location, 0)
+	if err := lr.data.db.Table("location").
+		Where("status=?", "running").
+		Where("created_at>=?", time.Date(2023, 2, 21, 12, 0, 0, 0, time.UTC)).
+		Find(&locations).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, errors.NotFound("LOCATION_NOT_FOUND", "location not found")
+		}
+
+		return nil, errors.New(500, "LOCATION ERROR", err.Error())
+	}
+
+	for _, location := range locations {
+		res = append(res, &biz.Location{
+			ID:           location.ID,
+			UserId:       location.UserId,
+			Status:       location.Status,
+			CurrentLevel: location.CurrentLevel,
+			Current:      location.Current,
+			CurrentMax:   location.CurrentMax,
+			Row:          location.Row,
+			Col:          location.Col,
+			CreatedAt:    location.CreatedAt,
+		})
+	}
+
+	return res, nil
+}
+
 // GetLocationsStopNotUpdate .
 func (lr *LocationRepo) GetLocationsStopNotUpdate(ctx context.Context) ([]*biz.Location, error) {
 	var locations []*Location

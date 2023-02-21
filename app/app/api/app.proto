@@ -238,6 +238,12 @@ service App {
 		};
 	};
 
+	rpc AdminDailyLocationReward (AdminDailyLocationRewardRequest) returns (AdminDailyLocationRewardReply) {
+		option (google.api.http) = {
+			get: "/api/admin_dhb/daily_location_reward"
+		};
+	};
+
 	rpc CheckAdminUserArea (CheckAdminUserAreaRequest) returns (CheckAdminUserAreaReply) {
 		option (google.api.http) = {
 			get: "/api/admin_dhb/check_admin_user_area"
@@ -418,6 +424,14 @@ message AdminDailyRecommendRewardRequest {
 }
 
 message AdminDailyRecommendRewardReply {
+
+}
+
+message AdminDailyLocationRewardRequest {
+	int32 day = 1;
+}
+
+message AdminDailyLocationRewardReply {
 
 }
 

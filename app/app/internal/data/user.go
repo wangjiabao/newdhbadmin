@@ -811,6 +811,49 @@ func (ub *UserBalanceRepo) UserDailyRecommendArea(ctx context.Context, userId in
 	return userBalanceRecode.ID, nil
 }
 
+// UserDailyLocationReward .
+func (ub *UserBalanceRepo) UserDailyLocationReward(ctx context.Context, userId int64, amount int64, status string, locationId int64) (int64, error) {
+	var err error
+	if "running" == status {
+		if err = ub.data.DB(ctx).Table("user_balance").
+			Where("user_id=?", userId).
+			Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt + ?", amount)}).Error; nil != err {
+			return 0, errors.NotFound("user balance err", "user balance not found")
+		}
+
+	}
+
+	var userBalance UserBalance
+	err = ub.data.DB(ctx).Where(&UserBalance{UserId: userId}).Table("user_balance").First(&userBalance).Error
+	if err != nil {
+		return 0, err
+	}
+
+	var userBalanceRecode UserBalanceRecord
+	userBalanceRecode.Balance = userBalance.BalanceUsdt
+	userBalanceRecode.UserId = userBalance.UserId
+	userBalanceRecode.Type = "reward"
+	userBalanceRecode.Amount = amount
+	err = ub.data.DB(ctx).Table("user_balance_record").Create(&userBalanceRecode).Error
+	if err != nil {
+		return 0, err
+	}
+
+	var reward Reward
+	reward.UserId = userBalance.UserId
+	reward.Amount = amount
+	reward.BalanceRecordId = userBalanceRecode.ID
+	reward.Type = "system_reward_daily"     // 本次分红的行为类型
+	reward.Reason = "location_daily_reward" // 给我分红的理由
+	reward.ReasonLocationId = locationId
+	err = ub.data.DB(ctx).Table("reward").Create(&reward).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return userBalanceRecode.ID, nil
+}
+
 // UpdateAdminPassword .
 func (u *UserRepo) UpdateAdminPassword(ctx context.Context, account string, password string) (*biz.Admin, error) {
 	var admin Admin
@@ -2055,6 +2098,35 @@ func (uc *UserCurrentMonthRecommendRepo) GetUserCurrentMonthRecommendGroupByUser
 		})
 	}
 	return res, nil, count
+}
+
+// GetLocationDailyReward .
+func (ub *UserBalanceRepo) GetLocationDailyReward(ctx context.Context, locationId int64) ([]*biz.Reward, error) {
+	var rewards []*Reward
+	res := make([]*biz.Reward, 0)
+	if err := ub.data.db.Where("reason_location_id=? and reason=?", locationId, "location_daily_reward").Table("reward").Find(&rewards).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, errors.NotFound("REWARD_NOT_FOUND", "reward not found")
+		}
+
+		return nil, errors.New(500, "REWARD ERROR", err.Error())
+	}
+
+	for _, reward := range rewards {
+		res = append(res, &biz.Reward{
+			ID:               reward.ID,
+			UserId:           reward.UserId,
+			Amount:           reward.Amount,
+			BalanceRecordId:  reward.BalanceRecordId,
+			Type:             reward.Type,
+			TypeRecordId:     reward.TypeRecordId,
+			Reason:           reward.Reason,
+			ReasonLocationId: reward.ReasonLocationId,
+			LocationType:     reward.LocationType,
+			CreatedAt:        reward.CreatedAt,
+		})
+	}
+	return res, nil
 }
 
 // GetUserRewardByUserId .

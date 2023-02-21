@@ -88,6 +88,13 @@ type Withdraw struct {
 	CreatedAt       time.Time
 }
 
+type LocationDailyReward struct {
+	ID         int64
+	UserId     int64
+	LocationId int64
+	day        int64
+}
+
 type UserUseCase struct {
 	repo                          UserRepo
 	urRepo                        UserRecommendRepo
@@ -185,6 +192,8 @@ type UserBalanceRepo interface {
 	GetUserRewardRecommendSort(ctx context.Context) ([]*UserSortRecommendReward, error)
 	UpdateBalance(ctx context.Context, userId int64, amount int64) (bool, error)
 	UserDailyRecommendArea(ctx context.Context, userId int64, amount int64, status string) (int64, error)
+	GetLocationDailyReward(ctx context.Context, locationId int64) ([]*Reward, error)
+	UserDailyLocationReward(ctx context.Context, userId int64, amount int64, status string, locationId int64) (int64, error)
 }
 
 type UserRecommendRepo interface {
@@ -2202,6 +2211,77 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 	//_, _ = uuc.locationRepo.UnLockGlobalWithdraw(ctx)
 
 	return &v1.AdminWithdrawReply{}, nil
+}
+
+func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.AdminDailyLocationRewardRequest) (*v1.AdminDailyLocationRewardReply, error) {
+
+	var (
+		userLocations      []*Location
+		configs            []*Config
+		locationRewardRate int64
+		err                error
+	)
+
+	//
+	configs, _ = uuc.configRepo.GetConfigByKeys(ctx, "location_reward_rate")
+	if nil != configs {
+		for _, vConfig := range configs {
+			if "location_reward_rate" == vConfig.KeyName {
+				locationRewardRate, _ = strconv.ParseInt(vConfig.Value, 10, 64)
+			}
+		}
+	}
+
+	userLocations, err = uuc.locationRepo.GetRunningLocations(ctx)
+	if nil != err {
+		return &v1.AdminDailyLocationRewardReply{}, nil
+	}
+	for _, vUserLocations := range userLocations {
+		var (
+			rewards []*Reward
+		)
+
+		// 最多100条
+		rewards, _ = uuc.ubRepo.GetLocationDailyReward(ctx, vUserLocations.ID)
+		if nil == rewards || 100 <= len(rewards) {
+			continue
+		}
+
+		tmpAmount := vUserLocations.CurrentMax / 5 * locationRewardRate / 1000
+
+		if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+			tmpCurrentStatus := vUserLocations.Status // 现在还在运行中
+			tmpBalanceAmount := tmpAmount
+			vUserLocations.Status = "running"
+			vUserLocations.Current += tmpAmount
+			if vUserLocations.Current >= vUserLocations.CurrentMax { // 占位分红人分满停止
+				if "running" == tmpCurrentStatus {
+					vUserLocations.StopDate = time.Now().UTC().Add(8 * time.Hour)
+				}
+				vUserLocations.Status = "stop"
+			}
+
+			if 0 < tmpBalanceAmount {
+				err = uuc.locationRepo.UpdateLocation(ctx, vUserLocations.ID, vUserLocations.Status, tmpBalanceAmount, vUserLocations.StopDate) // 分红占位数据修改
+				if nil != err {
+					return err
+				}
+
+				if 0 < tmpBalanceAmount { // 这次还能分红
+					_, err = uuc.ubRepo.UserDailyLocationReward(ctx, vUserLocations.UserId, tmpBalanceAmount, tmpCurrentStatus, vUserLocations.ID)
+					if nil != err {
+						return err
+					}
+				}
+			}
+
+			return nil
+		}); nil != err {
+			continue
+		}
+	}
+
+	return &v1.AdminDailyLocationRewardReply{}, nil
 }
 
 func (uuc *UserUseCase) AdminDailyRecommendReward(ctx context.Context, req *v1.AdminDailyRecommendRewardRequest) (*v1.AdminDailyRecommendRewardReply, error) {

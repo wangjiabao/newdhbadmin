@@ -57,6 +57,7 @@ type AppClient interface {
 	AuthAdminCreate(ctx context.Context, in *AuthAdminCreateRequest, opts ...grpc.CallOption) (*AuthAdminCreateReply, error)
 	AuthAdminDelete(ctx context.Context, in *AuthAdminDeleteRequest, opts ...grpc.CallOption) (*AuthAdminDeleteReply, error)
 	AdminDailyRecommendReward(ctx context.Context, in *AdminDailyRecommendRewardRequest, opts ...grpc.CallOption) (*AdminDailyRecommendRewardReply, error)
+	AdminDailyLocationReward(ctx context.Context, in *AdminDailyLocationRewardRequest, opts ...grpc.CallOption) (*AdminDailyLocationRewardReply, error)
 	CheckAdminUserArea(ctx context.Context, in *CheckAdminUserAreaRequest, opts ...grpc.CallOption) (*CheckAdminUserAreaReply, error)
 	AdminAreaLevelUpdate(ctx context.Context, in *AdminAreaLevelUpdateRequest, opts ...grpc.CallOption) (*AdminAreaLevelUpdateReply, error)
 }
@@ -384,6 +385,15 @@ func (c *appClient) AdminDailyRecommendReward(ctx context.Context, in *AdminDail
 	return out, nil
 }
 
+func (c *appClient) AdminDailyLocationReward(ctx context.Context, in *AdminDailyLocationRewardRequest, opts ...grpc.CallOption) (*AdminDailyLocationRewardReply, error) {
+	out := new(AdminDailyLocationRewardReply)
+	err := c.cc.Invoke(ctx, "/api.App/AdminDailyLocationReward", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *appClient) CheckAdminUserArea(ctx context.Context, in *CheckAdminUserAreaRequest, opts ...grpc.CallOption) (*CheckAdminUserAreaReply, error) {
 	out := new(CheckAdminUserAreaReply)
 	err := c.cc.Invoke(ctx, "/api.App/CheckAdminUserArea", in, out, opts...)
@@ -441,6 +451,7 @@ type AppServer interface {
 	AuthAdminCreate(context.Context, *AuthAdminCreateRequest) (*AuthAdminCreateReply, error)
 	AuthAdminDelete(context.Context, *AuthAdminDeleteRequest) (*AuthAdminDeleteReply, error)
 	AdminDailyRecommendReward(context.Context, *AdminDailyRecommendRewardRequest) (*AdminDailyRecommendRewardReply, error)
+	AdminDailyLocationReward(context.Context, *AdminDailyLocationRewardRequest) (*AdminDailyLocationRewardReply, error)
 	CheckAdminUserArea(context.Context, *CheckAdminUserAreaRequest) (*CheckAdminUserAreaReply, error)
 	AdminAreaLevelUpdate(context.Context, *AdminAreaLevelUpdateRequest) (*AdminAreaLevelUpdateReply, error)
 	mustEmbedUnimplementedAppServer()
@@ -554,6 +565,9 @@ func (UnimplementedAppServer) AuthAdminDelete(context.Context, *AuthAdminDeleteR
 }
 func (UnimplementedAppServer) AdminDailyRecommendReward(context.Context, *AdminDailyRecommendRewardRequest) (*AdminDailyRecommendRewardReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminDailyRecommendReward not implemented")
+}
+func (UnimplementedAppServer) AdminDailyLocationReward(context.Context, *AdminDailyLocationRewardRequest) (*AdminDailyLocationRewardReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminDailyLocationReward not implemented")
 }
 func (UnimplementedAppServer) CheckAdminUserArea(context.Context, *CheckAdminUserAreaRequest) (*CheckAdminUserAreaReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckAdminUserArea not implemented")
@@ -1204,6 +1218,24 @@ func _App_AdminDailyRecommendReward_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_AdminDailyLocationReward_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminDailyLocationRewardRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminDailyLocationReward(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.App/AdminDailyLocationReward",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminDailyLocationReward(ctx, req.(*AdminDailyLocationRewardRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _App_CheckAdminUserArea_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CheckAdminUserAreaRequest)
 	if err := dec(in); err != nil {
@@ -1386,6 +1418,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AdminDailyRecommendReward",
 			Handler:    _App_AdminDailyRecommendReward_Handler,
+		},
+		{
+			MethodName: "AdminDailyLocationReward",
+			Handler:    _App_AdminDailyLocationReward_Handler,
 		},
 		{
 			MethodName: "CheckAdminUserArea",
