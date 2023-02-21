@@ -433,7 +433,7 @@ func (lr *LocationRepo) GetRewardLocationByRowOrCol(ctx context.Context, row int
 	if row > locationRowConfig {
 		rowMin = row - locationRowConfig
 	}
-	rowMax = row + locationRowConfig
+	rowMax = row
 
 	if err := lr.data.db.Table("location").
 		Where("status=?", "running").

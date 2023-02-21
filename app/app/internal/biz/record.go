@@ -311,7 +311,7 @@ func (ruc *RecordUseCase) EthUserRecordHandle(ctx context.Context, ethUserRecord
 
 					var locationType string
 					var tmpAmount int64
-					if locationRow == vRewardLocations.Row { // 同行的人
+					if locationRow == vRewardLocations.Row && 3 == locationCol { // 同行的人 入单位置3才分红1，2
 						tmpAmount = currentValue / 100 * 5
 						locationType = "row"
 					} else if locationCol == vRewardLocations.Col { // 同列的人
