@@ -2199,7 +2199,7 @@ func (ub *UserBalanceRepo) GetUserRewardByUserId(ctx context.Context, userId int
 func (ub *UserBalanceRepo) GetUserRewardFix(ctx context.Context) ([]*biz.RewardFix, error) {
 	var rewards []*RewardFix
 	res := make([]*biz.RewardFix, 0)
-	if err := ub.data.db.Where("id<=? and id >=?", 501632, 490846).
+	if err := ub.data.db.Where("id<=? and id >=?", 501609, 490846).
 		Where("type=?", "withdraw").
 		Where("reason=?", "location").
 		Where("location_type=?", "row").
