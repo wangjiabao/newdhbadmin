@@ -3453,6 +3453,214 @@ var _ interface {
 	ErrorName() string
 } = AdminUserWithdrawFixReplyValidationError{}
 
+// Validate checks the field values on AdminWithdrawRelAmountFixRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the first error encountered is returned, or nil if there are
+// no violations.
+func (m *AdminWithdrawRelAmountFixRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AdminWithdrawRelAmountFixRequest with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// AdminWithdrawRelAmountFixRequestMultiError, or nil if none found.
+func (m *AdminWithdrawRelAmountFixRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdminWithdrawRelAmountFixRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return AdminWithdrawRelAmountFixRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdminWithdrawRelAmountFixRequestMultiError is an error wrapping multiple
+// validation errors returned by
+// AdminWithdrawRelAmountFixRequest.ValidateAll() if the designated
+// constraints aren't met.
+type AdminWithdrawRelAmountFixRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdminWithdrawRelAmountFixRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdminWithdrawRelAmountFixRequestMultiError) AllErrors() []error { return m }
+
+// AdminWithdrawRelAmountFixRequestValidationError is the validation error
+// returned by AdminWithdrawRelAmountFixRequest.Validate if the designated
+// constraints aren't met.
+type AdminWithdrawRelAmountFixRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdminWithdrawRelAmountFixRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdminWithdrawRelAmountFixRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdminWithdrawRelAmountFixRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdminWithdrawRelAmountFixRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdminWithdrawRelAmountFixRequestValidationError) ErrorName() string {
+	return "AdminWithdrawRelAmountFixRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdminWithdrawRelAmountFixRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdminWithdrawRelAmountFixRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdminWithdrawRelAmountFixRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdminWithdrawRelAmountFixRequestValidationError{}
+
+// Validate checks the field values on AdminWithdrawRelAmountFixReply with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *AdminWithdrawRelAmountFixReply) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on AdminWithdrawRelAmountFixReply with
+// the rules defined in the proto definition for this message. If any rules
+// are violated, the result is a list of violation errors wrapped in
+// AdminWithdrawRelAmountFixReplyMultiError, or nil if none found.
+func (m *AdminWithdrawRelAmountFixReply) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *AdminWithdrawRelAmountFixReply) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return AdminWithdrawRelAmountFixReplyMultiError(errors)
+	}
+
+	return nil
+}
+
+// AdminWithdrawRelAmountFixReplyMultiError is an error wrapping multiple
+// validation errors returned by AdminWithdrawRelAmountFixReply.ValidateAll()
+// if the designated constraints aren't met.
+type AdminWithdrawRelAmountFixReplyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m AdminWithdrawRelAmountFixReplyMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m AdminWithdrawRelAmountFixReplyMultiError) AllErrors() []error { return m }
+
+// AdminWithdrawRelAmountFixReplyValidationError is the validation error
+// returned by AdminWithdrawRelAmountFixReply.Validate if the designated
+// constraints aren't met.
+type AdminWithdrawRelAmountFixReplyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e AdminWithdrawRelAmountFixReplyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e AdminWithdrawRelAmountFixReplyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e AdminWithdrawRelAmountFixReplyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e AdminWithdrawRelAmountFixReplyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e AdminWithdrawRelAmountFixReplyValidationError) ErrorName() string {
+	return "AdminWithdrawRelAmountFixReplyValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e AdminWithdrawRelAmountFixReplyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sAdminWithdrawRelAmountFixReply.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = AdminWithdrawRelAmountFixReplyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = AdminWithdrawRelAmountFixReplyValidationError{}
+
 // Validate checks the field values on AdminUserListRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

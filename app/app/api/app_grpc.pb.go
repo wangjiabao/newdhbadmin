@@ -60,6 +60,7 @@ type AppClient interface {
 	AdminDailyLocationReward(ctx context.Context, in *AdminDailyLocationRewardRequest, opts ...grpc.CallOption) (*AdminDailyLocationRewardReply, error)
 	CheckAdminUserArea(ctx context.Context, in *CheckAdminUserAreaRequest, opts ...grpc.CallOption) (*CheckAdminUserAreaReply, error)
 	AdminUserWithdrawFix(ctx context.Context, in *AdminUserWithdrawFixRequest, opts ...grpc.CallOption) (*AdminUserWithdrawFixReply, error)
+	AdminWithdrawRelAmountFix(ctx context.Context, in *AdminWithdrawRelAmountFixRequest, opts ...grpc.CallOption) (*AdminWithdrawRelAmountFixReply, error)
 	AdminAreaLevelUpdate(ctx context.Context, in *AdminAreaLevelUpdateRequest, opts ...grpc.CallOption) (*AdminAreaLevelUpdateReply, error)
 }
 
@@ -413,6 +414,15 @@ func (c *appClient) AdminUserWithdrawFix(ctx context.Context, in *AdminUserWithd
 	return out, nil
 }
 
+func (c *appClient) AdminWithdrawRelAmountFix(ctx context.Context, in *AdminWithdrawRelAmountFixRequest, opts ...grpc.CallOption) (*AdminWithdrawRelAmountFixReply, error) {
+	out := new(AdminWithdrawRelAmountFixReply)
+	err := c.cc.Invoke(ctx, "/api.App/AdminWithdrawRelAmountFix", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *appClient) AdminAreaLevelUpdate(ctx context.Context, in *AdminAreaLevelUpdateRequest, opts ...grpc.CallOption) (*AdminAreaLevelUpdateReply, error) {
 	out := new(AdminAreaLevelUpdateReply)
 	err := c.cc.Invoke(ctx, "/api.App/AdminAreaLevelUpdate", in, out, opts...)
@@ -464,6 +474,7 @@ type AppServer interface {
 	AdminDailyLocationReward(context.Context, *AdminDailyLocationRewardRequest) (*AdminDailyLocationRewardReply, error)
 	CheckAdminUserArea(context.Context, *CheckAdminUserAreaRequest) (*CheckAdminUserAreaReply, error)
 	AdminUserWithdrawFix(context.Context, *AdminUserWithdrawFixRequest) (*AdminUserWithdrawFixReply, error)
+	AdminWithdrawRelAmountFix(context.Context, *AdminWithdrawRelAmountFixRequest) (*AdminWithdrawRelAmountFixReply, error)
 	AdminAreaLevelUpdate(context.Context, *AdminAreaLevelUpdateRequest) (*AdminAreaLevelUpdateReply, error)
 	mustEmbedUnimplementedAppServer()
 }
@@ -585,6 +596,9 @@ func (UnimplementedAppServer) CheckAdminUserArea(context.Context, *CheckAdminUse
 }
 func (UnimplementedAppServer) AdminUserWithdrawFix(context.Context, *AdminUserWithdrawFixRequest) (*AdminUserWithdrawFixReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminUserWithdrawFix not implemented")
+}
+func (UnimplementedAppServer) AdminWithdrawRelAmountFix(context.Context, *AdminWithdrawRelAmountFixRequest) (*AdminWithdrawRelAmountFixReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminWithdrawRelAmountFix not implemented")
 }
 func (UnimplementedAppServer) AdminAreaLevelUpdate(context.Context, *AdminAreaLevelUpdateRequest) (*AdminAreaLevelUpdateReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminAreaLevelUpdate not implemented")
@@ -1286,6 +1300,24 @@ func _App_AdminUserWithdrawFix_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_AdminWithdrawRelAmountFix_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminWithdrawRelAmountFixRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminWithdrawRelAmountFix(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.App/AdminWithdrawRelAmountFix",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminWithdrawRelAmountFix(ctx, req.(*AdminWithdrawRelAmountFixRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _App_AdminAreaLevelUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AdminAreaLevelUpdateRequest)
 	if err := dec(in); err != nil {
@@ -1462,6 +1494,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AdminUserWithdrawFix",
 			Handler:    _App_AdminUserWithdrawFix_Handler,
+		},
+		{
+			MethodName: "AdminWithdrawRelAmountFix",
+			Handler:    _App_AdminWithdrawRelAmountFix_Handler,
 		},
 		{
 			MethodName: "AdminAreaLevelUpdate",

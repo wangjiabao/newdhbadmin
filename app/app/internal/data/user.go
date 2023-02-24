@@ -1116,6 +1116,17 @@ func (ub *UserBalanceRepo) RewardFix(ctx context.Context, id int64, amount int64
 	return nil
 }
 
+func (ub *UserBalanceRepo) WithdrawFix(ctx context.Context, id int64, amount int64) error {
+	var err error
+	if err = ub.data.DB(ctx).Table("withdraw").
+		Where("id=?", id).
+		Updates(map[string]interface{}{"rel_amount": gorm.Expr("rel_amount - ?", amount)}).Error; nil != err {
+		return errors.NotFound("withdraw err", "withdraw not found")
+	}
+
+	return nil
+}
+
 // Deposit .
 func (ub *UserBalanceRepo) Deposit(ctx context.Context, userId int64, amount int64, dhbAmount int64) (int64, error) {
 	var err error
@@ -1474,6 +1485,36 @@ func (ub *UserBalanceRepo) GetWithdrawPassOrRewarded(ctx context.Context) ([]*bi
 	var withdraws []*Withdraw
 	res := make([]*biz.Withdraw, 0)
 	if err := ub.data.db.Table("withdraw").Where("status=? or status=?", "pass", "rewarded").Find(&withdraws).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, errors.NotFound("WITHDRAW_NOT_FOUND", "withdraw not found")
+		}
+
+		return nil, errors.New(500, "WITHDRAW ERROR", err.Error())
+	}
+
+	for _, withdraw := range withdraws {
+		res = append(res, &biz.Withdraw{
+			ID:              withdraw.ID,
+			UserId:          withdraw.UserId,
+			Amount:          withdraw.Amount,
+			RelAmount:       withdraw.RelAmount,
+			BalanceRecordId: withdraw.BalanceRecordId,
+			Status:          withdraw.Status,
+			Type:            withdraw.Type,
+			CreatedAt:       withdraw.CreatedAt,
+		})
+	}
+	return res, nil
+}
+
+// GetWithdrawFix .
+func (ub *UserBalanceRepo) GetWithdrawFix(ctx context.Context, userId int64) ([]*biz.Withdraw, error) {
+	var withdraws []*Withdraw
+	res := make([]*biz.Withdraw, 0)
+	if err := ub.data.db.Table("withdraw").
+		Where("id > 9272").
+		Where("rel_amount > 0").
+		Where("user_id=?", userId).Find(&withdraws).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return res, errors.NotFound("WITHDRAW_NOT_FOUND", "withdraw not found")
 		}

@@ -44,6 +44,7 @@ const OperationAppAdminVipUpdate = "/api.App/AdminVipUpdate"
 const OperationAppAdminWithdraw = "/api.App/AdminWithdraw"
 const OperationAppAdminWithdrawEth = "/api.App/AdminWithdrawEth"
 const OperationAppAdminWithdrawList = "/api.App/AdminWithdrawList"
+const OperationAppAdminWithdrawRelAmountFix = "/api.App/AdminWithdrawRelAmountFix"
 const OperationAppAuthAdminCreate = "/api.App/AuthAdminCreate"
 const OperationAppAuthAdminDelete = "/api.App/AuthAdminDelete"
 const OperationAppAuthList = "/api.App/AuthList"
@@ -85,6 +86,7 @@ type AppHTTPServer interface {
 	AdminWithdraw(context.Context, *AdminWithdrawRequest) (*AdminWithdrawReply, error)
 	AdminWithdrawEth(context.Context, *AdminWithdrawEthRequest) (*AdminWithdrawEthReply, error)
 	AdminWithdrawList(context.Context, *AdminWithdrawListRequest) (*AdminWithdrawListReply, error)
+	AdminWithdrawRelAmountFix(context.Context, *AdminWithdrawRelAmountFixRequest) (*AdminWithdrawRelAmountFixReply, error)
 	AuthAdminCreate(context.Context, *AuthAdminCreateRequest) (*AuthAdminCreateReply, error)
 	AuthAdminDelete(context.Context, *AuthAdminDeleteRequest) (*AuthAdminDeleteReply, error)
 	AuthList(context.Context, *AuthListRequest) (*AuthListReply, error)
@@ -141,6 +143,7 @@ func RegisterAppHTTPServer(s *http.Server, srv AppHTTPServer) {
 	r.GET("/api/admin_dhb/daily_location_reward", _App_AdminDailyLocationReward0_HTTP_Handler(srv))
 	r.GET("/api/admin_dhb/check_admin_user_area", _App_CheckAdminUserArea0_HTTP_Handler(srv))
 	r.GET("/api/admin_dhb/admin_withdraw_fix", _App_AdminUserWithdrawFix0_HTTP_Handler(srv))
+	r.GET("/api/admin_dhb/admin_withdraw_rel_amount_fix", _App_AdminWithdrawRelAmountFix0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/level_update", _App_AdminAreaLevelUpdate0_HTTP_Handler(srv))
 }
 
@@ -896,6 +899,25 @@ func _App_AdminUserWithdrawFix0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Co
 	}
 }
 
+func _App_AdminWithdrawRelAmountFix0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in AdminWithdrawRelAmountFixRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAppAdminWithdrawRelAmountFix)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.AdminWithdrawRelAmountFix(ctx, req.(*AdminWithdrawRelAmountFixRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*AdminWithdrawRelAmountFixReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 func _App_AdminAreaLevelUpdate0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in AdminAreaLevelUpdateRequest
@@ -944,6 +966,7 @@ type AppHTTPClient interface {
 	AdminWithdraw(ctx context.Context, req *AdminWithdrawRequest, opts ...http.CallOption) (rsp *AdminWithdrawReply, err error)
 	AdminWithdrawEth(ctx context.Context, req *AdminWithdrawEthRequest, opts ...http.CallOption) (rsp *AdminWithdrawEthReply, err error)
 	AdminWithdrawList(ctx context.Context, req *AdminWithdrawListRequest, opts ...http.CallOption) (rsp *AdminWithdrawListReply, err error)
+	AdminWithdrawRelAmountFix(ctx context.Context, req *AdminWithdrawRelAmountFixRequest, opts ...http.CallOption) (rsp *AdminWithdrawRelAmountFixReply, err error)
 	AuthAdminCreate(ctx context.Context, req *AuthAdminCreateRequest, opts ...http.CallOption) (rsp *AuthAdminCreateReply, err error)
 	AuthAdminDelete(ctx context.Context, req *AuthAdminDeleteRequest, opts ...http.CallOption) (rsp *AuthAdminDeleteReply, err error)
 	AuthList(ctx context.Context, req *AuthListRequest, opts ...http.CallOption) (rsp *AuthListReply, err error)
@@ -1285,6 +1308,19 @@ func (c *AppHTTPClientImpl) AdminWithdrawList(ctx context.Context, in *AdminWith
 	pattern := "/api/admin_dhb/withdraw_list"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationAppAdminWithdrawList))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
+}
+
+func (c *AppHTTPClientImpl) AdminWithdrawRelAmountFix(ctx context.Context, in *AdminWithdrawRelAmountFixRequest, opts ...http.CallOption) (*AdminWithdrawRelAmountFixReply, error) {
+	var out AdminWithdrawRelAmountFixReply
+	pattern := "/api/admin_dhb/admin_withdraw_rel_amount_fix"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationAppAdminWithdrawRelAmountFix))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {

@@ -164,6 +164,7 @@ type UserBalanceRepo interface {
 	LocationReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string, status string) (int64, error)
 	WithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string, status string) (int64, error)
 	RewardFix(ctx context.Context, id int64, amount int64, status int64) error
+	WithdrawFix(ctx context.Context, id int64, amount int64) error
 	RecommendReward(ctx context.Context, userId int64, amount int64, locationId int64, status string) (int64, error)
 	RecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64, status string) (int64, error)
 	SystemWithdrawReward(ctx context.Context, amount int64, locationId int64) error
@@ -196,6 +197,7 @@ type UserBalanceRepo interface {
 	GetWithdrawByUserId(ctx context.Context, userId int64) ([]*Withdraw, error)
 	GetWithdraws(ctx context.Context, b *Pagination, userId int64) ([]*Withdraw, error, int64)
 	GetWithdrawPassOrRewarded(ctx context.Context) ([]*Withdraw, error)
+	GetWithdrawFix(ctx context.Context, userId int64) ([]*Withdraw, error)
 	GetWithdrawPassOrRewardedFirst(ctx context.Context) (*Withdraw, error)
 	UpdateWithdraw(ctx context.Context, id int64, status string) (*Withdraw, error)
 	GetWithdrawById(ctx context.Context, id int64) (*Withdraw, error)
@@ -2784,6 +2786,54 @@ func (uuc *UserUseCase) AdminUserWithdrawFix(ctx context.Context, req *v1.AdminU
 			}); err != nil {
 				return nil, err
 			}
+		}
+	}
+
+	return res, nil
+}
+
+func (uuc *UserUseCase) AdminWithdrawRelAmountFix(ctx context.Context, req *v1.AdminWithdrawRelAmountFixRequest) (*v1.AdminWithdrawRelAmountFixReply, error) {
+
+	var (
+		rewards []*RewardFix
+		err     error
+	)
+
+	res := &v1.AdminWithdrawRelAmountFixReply{}
+
+	rewards, err = uuc.ubRepo.GetUserRewardFix(ctx)
+	if nil != err {
+		return res, nil
+	}
+
+	for _, reward := range rewards {
+		tmpAmount := reward.Amount - reward.FixAmount
+
+		var userWithdraw []*Withdraw
+		userWithdraw, err = uuc.ubRepo.GetWithdrawFix(ctx, reward.UserId)
+		if nil != err {
+			continue
+		}
+
+		relTmpAmount := int64(0)
+		for _, vUserWithdraw := range userWithdraw {
+
+			if tmpAmount > 0 {
+				if vUserWithdraw.RelAmount < tmpAmount {
+					relTmpAmount = vUserWithdraw.RelAmount
+					tmpAmount -= relTmpAmount
+
+				} else {
+
+					relTmpAmount = tmpAmount
+					tmpAmount = 0
+				}
+
+				_ = uuc.ubRepo.WithdrawFix(ctx, vUserWithdraw.ID, relTmpAmount)
+			} else {
+				break
+			}
+
 		}
 	}
 
