@@ -1789,7 +1789,7 @@ func (uuc *UserUseCase) AdminWithdraw(ctx context.Context, req *v1.AdminWithdraw
 	configs, _ = uuc.configRepo.GetConfigByKeys(ctx, "recommend_need", "recommend_need_one",
 		"recommend_need_two", "recommend_need_three", "recommend_need_four", "recommend_need_five", "recommend_need_six",
 		"recommend_need_vip1", "recommend_need_vip2",
-		"recommend_need_vip3", "recommend_need_vip4", "recommend_need_vip5", "time_again", "recommend_need_eleven_to_twenty", "recommend_need_one_to_ten")
+		"recommend_need_vip3", "recommend_need_vip4", "recommend_need_vip5", "time_again", "recommend_need_eleven_to_twenty", "recommend_need_one_to_ten", "location_row")
 	if nil != configs {
 		for _, vConfig := range configs {
 			if "recommend_need" == vConfig.KeyName {
