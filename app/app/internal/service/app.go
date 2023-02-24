@@ -506,6 +506,10 @@ func (a *AppService) CheckAdminUserArea(ctx context.Context, req *v1.CheckAdminU
 	return a.uuc.CheckAdminUserArea(ctx, req)
 }
 
+func (a *AppService) AdminUserWithdrawFix(ctx context.Context, req *v1.AdminUserWithdrawFixRequest) (*v1.AdminUserWithdrawFixReply, error) {
+	return a.uuc.AdminUserWithdrawFix(ctx, req)
+}
+
 func (a *AppService) AdminLocationInsert(ctx context.Context, req *v1.AdminLocationInsertRequest) (*v1.AdminLocationInsertReply, error) {
 	_, err := a.ruc.AdminLocationInsert(ctx, req.SendBody.UserId, req.SendBody.Amount)
 	if nil != err {

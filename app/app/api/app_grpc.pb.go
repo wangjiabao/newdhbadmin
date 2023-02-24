@@ -59,6 +59,7 @@ type AppClient interface {
 	AdminDailyRecommendReward(ctx context.Context, in *AdminDailyRecommendRewardRequest, opts ...grpc.CallOption) (*AdminDailyRecommendRewardReply, error)
 	AdminDailyLocationReward(ctx context.Context, in *AdminDailyLocationRewardRequest, opts ...grpc.CallOption) (*AdminDailyLocationRewardReply, error)
 	CheckAdminUserArea(ctx context.Context, in *CheckAdminUserAreaRequest, opts ...grpc.CallOption) (*CheckAdminUserAreaReply, error)
+	AdminUserWithdrawFix(ctx context.Context, in *AdminUserWithdrawFixRequest, opts ...grpc.CallOption) (*AdminUserWithdrawFixReply, error)
 	AdminAreaLevelUpdate(ctx context.Context, in *AdminAreaLevelUpdateRequest, opts ...grpc.CallOption) (*AdminAreaLevelUpdateReply, error)
 }
 
@@ -403,6 +404,15 @@ func (c *appClient) CheckAdminUserArea(ctx context.Context, in *CheckAdminUserAr
 	return out, nil
 }
 
+func (c *appClient) AdminUserWithdrawFix(ctx context.Context, in *AdminUserWithdrawFixRequest, opts ...grpc.CallOption) (*AdminUserWithdrawFixReply, error) {
+	out := new(AdminUserWithdrawFixReply)
+	err := c.cc.Invoke(ctx, "/api.App/AdminUserWithdrawFix", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *appClient) AdminAreaLevelUpdate(ctx context.Context, in *AdminAreaLevelUpdateRequest, opts ...grpc.CallOption) (*AdminAreaLevelUpdateReply, error) {
 	out := new(AdminAreaLevelUpdateReply)
 	err := c.cc.Invoke(ctx, "/api.App/AdminAreaLevelUpdate", in, out, opts...)
@@ -453,6 +463,7 @@ type AppServer interface {
 	AdminDailyRecommendReward(context.Context, *AdminDailyRecommendRewardRequest) (*AdminDailyRecommendRewardReply, error)
 	AdminDailyLocationReward(context.Context, *AdminDailyLocationRewardRequest) (*AdminDailyLocationRewardReply, error)
 	CheckAdminUserArea(context.Context, *CheckAdminUserAreaRequest) (*CheckAdminUserAreaReply, error)
+	AdminUserWithdrawFix(context.Context, *AdminUserWithdrawFixRequest) (*AdminUserWithdrawFixReply, error)
 	AdminAreaLevelUpdate(context.Context, *AdminAreaLevelUpdateRequest) (*AdminAreaLevelUpdateReply, error)
 	mustEmbedUnimplementedAppServer()
 }
@@ -571,6 +582,9 @@ func (UnimplementedAppServer) AdminDailyLocationReward(context.Context, *AdminDa
 }
 func (UnimplementedAppServer) CheckAdminUserArea(context.Context, *CheckAdminUserAreaRequest) (*CheckAdminUserAreaReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckAdminUserArea not implemented")
+}
+func (UnimplementedAppServer) AdminUserWithdrawFix(context.Context, *AdminUserWithdrawFixRequest) (*AdminUserWithdrawFixReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminUserWithdrawFix not implemented")
 }
 func (UnimplementedAppServer) AdminAreaLevelUpdate(context.Context, *AdminAreaLevelUpdateRequest) (*AdminAreaLevelUpdateReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminAreaLevelUpdate not implemented")
@@ -1254,6 +1268,24 @@ func _App_CheckAdminUserArea_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_AdminUserWithdrawFix_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminUserWithdrawFixRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminUserWithdrawFix(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.App/AdminUserWithdrawFix",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminUserWithdrawFix(ctx, req.(*AdminUserWithdrawFixRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _App_AdminAreaLevelUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AdminAreaLevelUpdateRequest)
 	if err := dec(in); err != nil {
@@ -1426,6 +1458,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckAdminUserArea",
 			Handler:    _App_CheckAdminUserArea_Handler,
+		},
+		{
+			MethodName: "AdminUserWithdrawFix",
+			Handler:    _App_AdminUserWithdrawFix_Handler,
 		},
 		{
 			MethodName: "AdminAreaLevelUpdate",

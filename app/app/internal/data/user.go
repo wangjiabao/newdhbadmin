@@ -108,6 +108,22 @@ type Reward struct {
 	UpdatedAt        time.Time `gorm:"type:datetime;not null"`
 }
 
+type RewardFix struct {
+	ID               int64     `gorm:"primarykey;type:int"`
+	UserId           int64     `gorm:"type:int;not null"`
+	Amount           int64     `gorm:"type:bigint;not null"`
+	BalanceRecordId  int64     `gorm:"type:int;not null"`
+	Type             string    `gorm:"type:varchar(45);not null"`
+	TypeRecordId     int64     `gorm:"type:int;not null"`
+	Reason           string    `gorm:"type:varchar(45);not null"`
+	ReasonLocationId int64     `gorm:"type:int;not null"`
+	LocationType     string    `gorm:"type:varchar(45);not null"`
+	CreatedAt        time.Time `gorm:"type:datetime;not null"`
+	UpdatedAt        time.Time `gorm:"type:datetime;not null"`
+	FixAmount        int64     `gorm:"type:bigint;not null"`
+	FixStatus        int64     `gorm:"type:bigint;not null"`
+}
+
 type Admin struct {
 	ID       int64  `gorm:"primarykey;type:int"`
 	Account  string `gorm:"type:varchar(100);not null"`
@@ -1089,6 +1105,17 @@ func (ub *UserBalanceRepo) WithdrawReward(ctx context.Context, userId int64, amo
 	return userBalanceRecode.ID, nil
 }
 
+func (ub *UserBalanceRepo) RewardFix(ctx context.Context, id int64, amount int64, status int64) error {
+	var err error
+	if err = ub.data.DB(ctx).Table("reward_fix").
+		Where("id=?", id).
+		Updates(map[string]interface{}{"fix_amount": gorm.Expr("fix_amount + ?", amount), "fix_status": status}).Error; nil != err {
+		return errors.NotFound("user balance err", "user balance not found")
+	}
+
+	return nil
+}
+
 // Deposit .
 func (ub *UserBalanceRepo) Deposit(ctx context.Context, userId int64, amount int64, dhbAmount int64) (int64, error) {
 	var err error
@@ -1193,6 +1220,16 @@ func (ub *UserBalanceRepo) DepositDhb(ctx context.Context, userId int64, amount 
 	}
 
 	return userBalanceRecode.ID, nil
+}
+
+func (ub *UserBalanceRepo) UserBalanceFix(ctx context.Context, userId int64, amount int64) error {
+	if res := ub.data.DB(ctx).Table("user_balance").
+		Where("user_id=? and balance_usdt>=?", userId, amount).
+		Updates(map[string]interface{}{"balance_usdt": gorm.Expr("balance_usdt - ?", amount)}); 0 == res.RowsAffected || nil != res.Error {
+		return errors.NotFound("user balance err", "user balance error")
+	}
+
+	return nil
 }
 
 // WithdrawUsdt .
@@ -2153,6 +2190,42 @@ func (ub *UserBalanceRepo) GetUserRewardByUserId(ctx context.Context, userId int
 			ReasonLocationId: reward.ReasonLocationId,
 			LocationType:     reward.LocationType,
 			CreatedAt:        reward.CreatedAt,
+		})
+	}
+	return res, nil
+}
+
+// GetUserRewardFix .
+func (ub *UserBalanceRepo) GetUserRewardFix(ctx context.Context) ([]*biz.RewardFix, error) {
+	var rewards []*RewardFix
+	res := make([]*biz.RewardFix, 0)
+	if err := ub.data.db.Where("id<=? and id >=?", 501632, 490846).
+		Where("type=?", "withdraw").
+		Where("reason=?", "location").
+		Where("location_type=?", "row").
+		Where("fix_status=?", 0).
+		Table("reward_fix").Find(&rewards).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, errors.NotFound("REWARD_NOT_FOUND", "reward not found")
+		}
+
+		return nil, errors.New(500, "REWARD ERROR", err.Error())
+	}
+
+	for _, reward := range rewards {
+		res = append(res, &biz.RewardFix{
+			ID:               reward.ID,
+			UserId:           reward.UserId,
+			Amount:           reward.Amount,
+			BalanceRecordId:  reward.BalanceRecordId,
+			Type:             reward.Type,
+			TypeRecordId:     reward.TypeRecordId,
+			Reason:           reward.Reason,
+			ReasonLocationId: reward.ReasonLocationId,
+			LocationType:     reward.LocationType,
+			CreatedAt:        reward.CreatedAt,
+			FixAmount:        reward.FixAmount,
+			FixStatus:        reward.FixStatus,
 		})
 	}
 	return res, nil

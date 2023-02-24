@@ -39,6 +39,7 @@ const OperationAppAdminMonthRecommend = "/api.App/AdminMonthRecommend"
 const OperationAppAdminRewardList = "/api.App/AdminRewardList"
 const OperationAppAdminUserList = "/api.App/AdminUserList"
 const OperationAppAdminUserRecommend = "/api.App/AdminUserRecommend"
+const OperationAppAdminUserWithdrawFix = "/api.App/AdminUserWithdrawFix"
 const OperationAppAdminVipUpdate = "/api.App/AdminVipUpdate"
 const OperationAppAdminWithdraw = "/api.App/AdminWithdraw"
 const OperationAppAdminWithdrawEth = "/api.App/AdminWithdrawEth"
@@ -79,6 +80,7 @@ type AppHTTPServer interface {
 	AdminRewardList(context.Context, *AdminRewardListRequest) (*AdminRewardListReply, error)
 	AdminUserList(context.Context, *AdminUserListRequest) (*AdminUserListReply, error)
 	AdminUserRecommend(context.Context, *AdminUserRecommendRequest) (*AdminUserRecommendReply, error)
+	AdminUserWithdrawFix(context.Context, *AdminUserWithdrawFixRequest) (*AdminUserWithdrawFixReply, error)
 	AdminVipUpdate(context.Context, *AdminVipUpdateRequest) (*AdminVipUpdateReply, error)
 	AdminWithdraw(context.Context, *AdminWithdrawRequest) (*AdminWithdrawReply, error)
 	AdminWithdrawEth(context.Context, *AdminWithdrawEthRequest) (*AdminWithdrawEthReply, error)
@@ -138,6 +140,7 @@ func RegisterAppHTTPServer(s *http.Server, srv AppHTTPServer) {
 	r.GET("/api/admin_dhb/daily_recommend_reward", _App_AdminDailyRecommendReward0_HTTP_Handler(srv))
 	r.GET("/api/admin_dhb/daily_location_reward", _App_AdminDailyLocationReward0_HTTP_Handler(srv))
 	r.GET("/api/admin_dhb/check_admin_user_area", _App_CheckAdminUserArea0_HTTP_Handler(srv))
+	r.GET("/api/admin_dhb/admin_withdraw_fix", _App_AdminUserWithdrawFix0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/level_update", _App_AdminAreaLevelUpdate0_HTTP_Handler(srv))
 }
 
@@ -874,6 +877,25 @@ func _App_CheckAdminUserArea0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Cont
 	}
 }
 
+func _App_AdminUserWithdrawFix0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in AdminUserWithdrawFixRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAppAdminUserWithdrawFix)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.AdminUserWithdrawFix(ctx, req.(*AdminUserWithdrawFixRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*AdminUserWithdrawFixReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 func _App_AdminAreaLevelUpdate0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in AdminAreaLevelUpdateRequest
@@ -917,6 +939,7 @@ type AppHTTPClient interface {
 	AdminRewardList(ctx context.Context, req *AdminRewardListRequest, opts ...http.CallOption) (rsp *AdminRewardListReply, err error)
 	AdminUserList(ctx context.Context, req *AdminUserListRequest, opts ...http.CallOption) (rsp *AdminUserListReply, err error)
 	AdminUserRecommend(ctx context.Context, req *AdminUserRecommendRequest, opts ...http.CallOption) (rsp *AdminUserRecommendReply, err error)
+	AdminUserWithdrawFix(ctx context.Context, req *AdminUserWithdrawFixRequest, opts ...http.CallOption) (rsp *AdminUserWithdrawFixReply, err error)
 	AdminVipUpdate(ctx context.Context, req *AdminVipUpdateRequest, opts ...http.CallOption) (rsp *AdminVipUpdateReply, err error)
 	AdminWithdraw(ctx context.Context, req *AdminWithdrawRequest, opts ...http.CallOption) (rsp *AdminWithdrawReply, err error)
 	AdminWithdrawEth(ctx context.Context, req *AdminWithdrawEthRequest, opts ...http.CallOption) (rsp *AdminWithdrawEthReply, err error)
@@ -1197,6 +1220,19 @@ func (c *AppHTTPClientImpl) AdminUserRecommend(ctx context.Context, in *AdminUse
 	pattern := "/api/admin_dhb/user_recommend"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationAppAdminUserRecommend))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
+}
+
+func (c *AppHTTPClientImpl) AdminUserWithdrawFix(ctx context.Context, in *AdminUserWithdrawFixRequest, opts ...http.CallOption) (*AdminUserWithdrawFixReply, error) {
+	var out AdminUserWithdrawFixReply
+	pattern := "/api/admin_dhb/admin_withdraw_fix"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationAppAdminUserWithdrawFix))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {

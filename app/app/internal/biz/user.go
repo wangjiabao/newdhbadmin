@@ -120,6 +120,21 @@ type Reward struct {
 	CreatedAt        time.Time
 }
 
+type RewardFix struct {
+	ID               int64
+	UserId           int64
+	Amount           int64
+	BalanceRecordId  int64
+	Type             string
+	TypeRecordId     int64
+	Reason           string
+	ReasonLocationId int64
+	LocationType     string
+	CreatedAt        time.Time
+	FixAmount        int64
+	FixStatus        int64
+}
+
 type UserArea struct {
 	ID         int64
 	UserId     int64
@@ -148,6 +163,7 @@ type UserBalanceRepo interface {
 	CreateUserBalance(ctx context.Context, u *User) (*UserBalance, error)
 	LocationReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string, status string) (int64, error)
 	WithdrawReward(ctx context.Context, userId int64, amount int64, locationId int64, myLocationId int64, locationType string, status string) (int64, error)
+	RewardFix(ctx context.Context, id int64, amount int64, status int64) error
 	RecommendReward(ctx context.Context, userId int64, amount int64, locationId int64, status string) (int64, error)
 	RecommendTopReward(ctx context.Context, userId int64, amount int64, locationId int64, vip int64, status string) (int64, error)
 	SystemWithdrawReward(ctx context.Context, amount int64, locationId int64) error
@@ -168,6 +184,7 @@ type UserBalanceRepo interface {
 	DepositDhb(ctx context.Context, userId int64, amount int64) (int64, error)
 	GetUserBalance(ctx context.Context, userId int64) (*UserBalance, error)
 	GetUserRewardByUserId(ctx context.Context, userId int64) ([]*Reward, error)
+	GetUserRewardFix(ctx context.Context) ([]*RewardFix, error)
 	GetUserRewards(ctx context.Context, b *Pagination, userId int64) ([]*Reward, error, int64)
 	GetUserRewardsLastMonthFee(ctx context.Context) ([]*Reward, error)
 	GetUserBalanceByUserIds(ctx context.Context, userIds ...int64) (map[int64]*UserBalance, error)
@@ -175,6 +192,7 @@ type UserBalanceRepo interface {
 	GreateWithdraw(ctx context.Context, userId int64, amount int64, coinType string) (*Withdraw, error)
 	WithdrawUsdt(ctx context.Context, userId int64, amount int64) error
 	WithdrawDhb(ctx context.Context, userId int64, amount int64) error
+	UserBalanceFix(ctx context.Context, userId int64, amount int64) error
 	GetWithdrawByUserId(ctx context.Context, userId int64) ([]*Withdraw, error)
 	GetWithdraws(ctx context.Context, b *Pagination, userId int64) ([]*Withdraw, error, int64)
 	GetWithdrawPassOrRewarded(ctx context.Context) ([]*Withdraw, error)
@@ -2711,6 +2729,62 @@ func (uuc *UserUseCase) AdminAreaLevelUpdate(ctx context.Context, req *v1.AdminA
 	_, err = uuc.urRepo.UpdateUserAreaLevel(ctx, req.SendBody.UserId, req.SendBody.Level)
 	if nil != err {
 		return res, err
+	}
+
+	return res, nil
+}
+
+func (uuc *UserUseCase) AdminUserWithdrawFix(ctx context.Context, req *v1.AdminUserWithdrawFixRequest) (*v1.AdminUserWithdrawFixReply, error) {
+
+	var (
+		rewards []*RewardFix
+		err     error
+	)
+
+	res := &v1.AdminUserWithdrawFixReply{}
+
+	rewards, err = uuc.ubRepo.GetUserRewardFix(ctx)
+	if nil != err {
+		return res, nil
+	}
+
+	for _, reward := range rewards {
+
+		var userBalance *UserBalance
+		userBalance, err = uuc.ubRepo.GetUserBalance(ctx, reward.UserId)
+		if nil != err {
+			continue
+		}
+
+		tmpAmount := reward.Amount - reward.FixAmount
+		tmpStatus := int64(0)
+
+		// 扣除
+		if tmpAmount > userBalance.BalanceUsdt {
+			tmpAmount = userBalance.BalanceUsdt
+		} else if tmpAmount <= userBalance.BalanceUsdt {
+			tmpStatus = int64(1)
+		}
+
+		if tmpAmount > 0 {
+			if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+
+				// 扣余额
+				err = uuc.ubRepo.UserBalanceFix(ctx, reward.UserId, tmpAmount)
+				if nil != err {
+					return err
+				}
+
+				err = uuc.ubRepo.RewardFix(ctx, reward.ID, tmpAmount, tmpStatus)
+				if nil != err {
+					return err
+				}
+
+				return nil
+			}); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return res, nil
